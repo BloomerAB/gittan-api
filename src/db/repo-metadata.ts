@@ -34,15 +34,31 @@ export const createRepoMetadataRepo = (client: Client) => ({
     const tags = input.tags ?? []
     const gatedBranches = input.gatedBranches ?? ["main"]
 
-    await client.execute(
-      `INSERT INTO ${KEYSPACE}.repos (
-        id, org_id, team_id, name, forgejo_full_name, clone_url, ssh_url,
-        tags, gated_branches, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    const params = [
+      input.id, input.orgId, input.teamId, input.name,
+      input.forgejoFullName, input.cloneUrl, input.sshUrl,
+      tags, gatedBranches, now, now,
+    ]
+
+    const insertFields = `id, org_id, team_id, name, forgejo_full_name, clone_url, ssh_url,
+        tags, gated_branches, created_at, updated_at`
+    const placeholders = "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+
+    await client.batch(
       [
-        input.id, input.orgId, input.teamId, input.name,
-        input.forgejoFullName, input.cloneUrl, input.sshUrl,
-        tags, gatedBranches, now, now,
+        {
+          query: `INSERT INTO ${KEYSPACE}.repos (${insertFields}) VALUES (${placeholders})`,
+          params,
+        },
+        {
+          query: `INSERT INTO ${KEYSPACE}.repos_by_team (${insertFields}) VALUES (${placeholders})`,
+          params,
+        },
+        {
+          query: `INSERT INTO ${KEYSPACE}.repos_by_forgejo_name (forgejo_full_name, org_id, repo_id)
+                  VALUES (?, ?, ?)`,
+          params: [input.forgejoFullName, input.orgId, input.id],
+        },
       ],
       { prepare: true },
     )
@@ -66,6 +82,26 @@ export const createRepoMetadataRepo = (client: Client) => ({
     const result = await client.execute(
       `SELECT * FROM ${KEYSPACE}.repos WHERE org_id = ? AND id = ?`,
       [orgId, repoId],
+      { prepare: true },
+    )
+
+    if (result.rowLength === 0) return undefined
+    return rowToRepo(result.first())
+  },
+
+  getByForgejoName: async (forgejoFullName: string): Promise<TRepoMetadata | undefined> => {
+    const lookup = await client.execute(
+      `SELECT org_id, repo_id FROM ${KEYSPACE}.repos_by_forgejo_name WHERE forgejo_full_name = ?`,
+      [forgejoFullName],
+      { prepare: true },
+    )
+
+    if (lookup.rowLength === 0) return undefined
+
+    const { org_id, repo_id } = lookup.first()
+    const result = await client.execute(
+      `SELECT * FROM ${KEYSPACE}.repos WHERE org_id = ? AND id = ?`,
+      [org_id, repo_id],
       { prepare: true },
     )
 

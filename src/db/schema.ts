@@ -78,6 +78,12 @@ export const CREATE_TABLES = [
     PRIMARY KEY (team_id, id)
   )`,
 
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.repos_by_forgejo_name (
+    forgejo_full_name text PRIMARY KEY,
+    org_id text,
+    repo_id text
+  )`,
+
   `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.pipeline_runs (
     id text,
     repo_id text,

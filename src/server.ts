@@ -8,8 +8,11 @@ import {
   registerHealthRoutes,
   type THealthDependency,
 } from "./paths/health.js"
+import { registerHookRoutes } from "./paths/hooks.js"
 import { registerRepoRoutes } from "./paths/repos.js"
 import { registerTeamRoutes } from "./paths/teams.js"
+
+import type { NatsConnection } from "nats"
 
 export type TServerDeps = {
   readonly config: TConfig
@@ -17,6 +20,7 @@ export type TServerDeps = {
   readonly teamRepo: TTeamRepo
   readonly repoMetadata: TRepoMetadataRepo
   readonly forgejo: TForgejoClient
+  readonly nats: NatsConnection
 }
 
 export const createServer = (deps: TServerDeps): Express => {
@@ -32,6 +36,10 @@ export const createServer = (deps: TServerDeps): Express => {
     teamRepo: deps.teamRepo,
     forgejo: deps.forgejo,
     webhookBaseUrl: `http://localhost:${deps.config.port}`,
+  })
+  registerHookRoutes(router, {
+    nats: deps.nats,
+    repoMetadata: deps.repoMetadata,
   })
   app.use(router)
 
