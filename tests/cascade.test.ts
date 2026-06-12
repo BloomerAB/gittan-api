@@ -162,11 +162,20 @@ describe("cascade subscriber", () => {
 
   it("does not cascade on non-main branch", async () => {
     const nats3 = await connect({ servers: "nats://localhost:4222" })
+    const cascadeResults: TCascadeResult[] = []
 
     const mockDeps: TDependencyRepo = {
       register: vi.fn(),
       getDependencies: vi.fn(),
-      getDependents: vi.fn(),
+      getDependents: vi.fn().mockResolvedValue([
+        {
+          dependsOnRepoId: "types-repo",
+          dependentRepoId: "api-repo",
+          dependentRepoName: "api-service",
+          cascade: true,
+          contractTest: true,
+        },
+      ]),
       removeDependencies: vi.fn(),
     }
 
@@ -179,6 +188,7 @@ describe("cascade subscriber", () => {
         getByForgejoName: vi.fn(),
         listByTeam: vi.fn(),
       },
+      onCascade: (result) => cascadeResults.push(result),
     })
 
     nats3.publish(
@@ -195,9 +205,9 @@ describe("cascade subscriber", () => {
     )
 
     await nats3.flush()
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 200))
 
-    expect(mockDeps.getDependents).not.toHaveBeenCalled()
+    expect(cascadeResults).toHaveLength(0)
 
     await nats3.drain()
   })
