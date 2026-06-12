@@ -66,7 +66,7 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
       repoFiles,
       teamName: pushEvent.teamId,
       repoName: pushEvent.repoName,
-      repoTags: repoMeta?.tags ?? [],
+      repoTags: [],
     })
 
     await deps.onPipelineResolved({ pushEvent, resolved })

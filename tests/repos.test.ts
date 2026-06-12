@@ -117,7 +117,6 @@ describe("repo routes", () => {
       })
       vi.mocked(repoMetadata.create).mockImplementation(async (input) => ({
         ...input,
-        tags: input.tags ?? [],
         gatedBranches: input.gatedBranches ?? ["main"],
         createdAt: "2026-06-12T10:00:00Z",
         updatedAt: "2026-06-12T10:00:00Z",
@@ -176,7 +175,6 @@ describe("repo routes", () => {
       })
       vi.mocked(repoMetadata.create).mockImplementation(async (input) => ({
         ...input,
-        tags: input.tags ?? [],
         gatedBranches: input.gatedBranches ?? ["main"],
         createdAt: "2026-06-12T10:00:00Z",
         updatedAt: "2026-06-12T10:00:00Z",
@@ -232,7 +230,6 @@ describe("repo routes", () => {
         forgejoFullName: "org-1/api-service",
         cloneUrl: "http://localhost:3333/org-1/api-service.git",
         sshUrl: "ssh://git@localhost:2223/org-1/api-service.git",
-        tags: ["production"],
         gatedBranches: ["main"],
         createdAt: "2026-06-12T10:00:00Z",
         updatedAt: "2026-06-12T10:00:00Z",
@@ -273,7 +270,6 @@ describe("repo routes", () => {
           forgejoFullName: "org-1/api-service",
           cloneUrl: "http://localhost:3333/org-1/api-service.git",
           sshUrl: "ssh://git@localhost:2223/org-1/api-service.git",
-          tags: [],
           gatedBranches: ["main"],
           createdAt: "2026-06-12T10:00:00Z",
           updatedAt: "2026-06-12T10:00:00Z",

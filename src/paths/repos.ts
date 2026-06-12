@@ -16,7 +16,6 @@ const CreateRepoBody = z.object({
   teamId: z.string().min(1),
   description: z.string().max(256).optional(),
   private: z.boolean().default(true),
-  tags: z.array(z.string()).default([]),
   gatedBranches: z.array(z.string()).default(["main"]),
 })
 
@@ -39,7 +38,7 @@ export const registerRepoRoutes = (
     }
 
     const { orgId } = req.params
-    const { name, teamId, description, tags, gatedBranches } = parsed.data
+    const { name, teamId, description, gatedBranches } = parsed.data
     const isPrivate = parsed.data.private
 
     const team = await deps.teamRepo.getTeam(orgId, teamId)
@@ -72,7 +71,6 @@ export const registerRepoRoutes = (
       forgejoFullName: forgejoRepo.fullName,
       cloneUrl: forgejoRepo.cloneUrl,
       sshUrl: forgejoRepo.sshUrl,
-      tags,
       gatedBranches,
     })
 

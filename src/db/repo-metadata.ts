@@ -10,7 +10,6 @@ export type TRepoMetadata = {
   readonly forgejoFullName: string
   readonly cloneUrl: string
   readonly sshUrl: string
-  readonly tags: ReadonlyArray<string>
   readonly gatedBranches: ReadonlyArray<string>
   readonly createdAt: string
   readonly updatedAt: string
@@ -24,25 +23,23 @@ export type TCreateRepoMetadataInput = {
   readonly forgejoFullName: string
   readonly cloneUrl: string
   readonly sshUrl: string
-  readonly tags?: ReadonlyArray<string>
   readonly gatedBranches?: ReadonlyArray<string>
 }
 
 export const createRepoMetadataRepo = (client: Client) => ({
   create: async (input: TCreateRepoMetadataInput): Promise<TRepoMetadata> => {
     const now = new Date().toISOString()
-    const tags = input.tags ?? []
     const gatedBranches = input.gatedBranches ?? ["main"]
 
     const params = [
       input.id, input.orgId, input.teamId, input.name,
       input.forgejoFullName, input.cloneUrl, input.sshUrl,
-      tags, gatedBranches, now, now,
+      gatedBranches, now, now,
     ]
 
     const insertFields = `id, org_id, team_id, name, forgejo_full_name, clone_url, ssh_url,
-        tags, gated_branches, created_at, updated_at`
-    const placeholders = "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+        gated_branches, created_at, updated_at`
+    const placeholders = "?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
 
     await client.batch(
       [
@@ -71,7 +68,6 @@ export const createRepoMetadataRepo = (client: Client) => ({
       forgejoFullName: input.forgejoFullName,
       cloneUrl: input.cloneUrl,
       sshUrl: input.sshUrl,
-      tags,
       gatedBranches,
       createdAt: now,
       updatedAt: now,
@@ -128,7 +124,6 @@ const rowToRepo = (row: Record<string, unknown>): TRepoMetadata => ({
   forgejoFullName: row.forgejo_full_name as string,
   cloneUrl: row.clone_url as string,
   sshUrl: row.ssh_url as string,
-  tags: (row.tags as string[]) ?? [],
   gatedBranches: (row.gated_branches as string[]) ?? ["main"],
   createdAt: (row.created_at as Date).toISOString(),
   updatedAt: (row.updated_at as Date).toISOString(),

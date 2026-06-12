@@ -128,7 +128,6 @@ describe("end-to-end flow", () => {
       forgejoFullName: typesForgejoRepo.fullName,
       cloneUrl: typesForgejoRepo.cloneUrl,
       sshUrl: typesForgejoRepo.sshUrl,
-      tags: ["shared"],
       gatedBranches: ["main"],
     })
 
@@ -140,7 +139,6 @@ describe("end-to-end flow", () => {
       forgejoFullName: apiForgejoRepo.fullName,
       cloneUrl: apiForgejoRepo.cloneUrl,
       sshUrl: apiForgejoRepo.sshUrl,
-      tags: ["production"],
       gatedBranches: ["main"],
     })
 
@@ -234,7 +232,7 @@ describe("end-to-end flow", () => {
       repoFiles: rootFiles,
       teamName: team.name,
       repoName: apiRepo.name,
-      repoTags: apiRepo.tags as string[],
+      repoTags: [],
     })
 
     // 9. Verify resolved pipeline

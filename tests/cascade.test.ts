@@ -67,7 +67,6 @@ describe("cascade subscriber", () => {
         forgejoFullName: "org-1/api-service",
         cloneUrl: "",
         sshUrl: "",
-        tags: [],
         gatedBranches: ["main"],
         createdAt: "2026-06-12T10:00:00Z",
         updatedAt: "2026-06-12T10:00:00Z",
