@@ -78,6 +78,25 @@ export const CREATE_TABLES = [
     PRIMARY KEY (team_id, id)
   )`,
 
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.repo_dependencies (
+    repo_id text,
+    depends_on_repo_id text,
+    depends_on_repo_name text,
+    cascade boolean,
+    contract_test boolean,
+    created_at timestamp,
+    PRIMARY KEY (repo_id, depends_on_repo_id)
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.repo_dependents (
+    depends_on_repo_id text,
+    dependent_repo_id text,
+    dependent_repo_name text,
+    cascade boolean,
+    contract_test boolean,
+    PRIMARY KEY (depends_on_repo_id, dependent_repo_id)
+  )`,
+
   `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.repos_by_forgejo_name (
     forgejo_full_name text PRIMARY KEY,
     org_id text,

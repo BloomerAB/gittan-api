@@ -35,6 +35,8 @@ export const cleanupTestDb = async (client: Client): Promise<void> => {
     "repos",
     "repos_by_team",
     "repos_by_forgejo_name",
+    "repo_dependencies",
+    "repo_dependents",
     "pipeline_runs",
     "pipeline_runs_by_team",
   ]
