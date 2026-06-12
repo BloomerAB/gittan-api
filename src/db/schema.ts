@@ -103,6 +103,19 @@ export const CREATE_TABLES = [
     repo_id text
   )`,
 
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.step_definitions (
+    org_id text,
+    name text,
+    image text,
+    run text,
+    defaults text,
+    cache list<text>,
+    description text,
+    created_at timestamp,
+    updated_at timestamp,
+    PRIMARY KEY (org_id, name)
+  )`,
+
   `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.pipeline_runs (
     id text,
     repo_id text,
