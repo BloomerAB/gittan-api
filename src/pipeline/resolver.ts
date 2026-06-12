@@ -1,4 +1,4 @@
-import type { TOrgPolicy, TPipelineStep, TTeamTemplate } from "@gittan/types"
+import type { TOrgPolicy, TPipelineStep, TTeamTemplate } from "@bloomerab/gittan-types"
 
 export type TResolvedStep = {
   readonly name: string

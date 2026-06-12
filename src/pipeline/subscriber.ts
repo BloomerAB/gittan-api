@@ -30,10 +30,10 @@ export type TPipelineEvent = {
 export type TSubscriberDeps = {
   readonly nats: NatsConnection
   readonly repoMetadata: TRepoMetadataRepo
-  readonly getPolicies: (orgId: string) => Promise<ReadonlyArray<import("@gittan/types").TOrgPolicy>>
-  readonly getTemplate: (teamId: string) => Promise<import("@gittan/types").TTeamTemplate | undefined>
+  readonly getPolicies: (orgId: string) => Promise<ReadonlyArray<import("@bloomerab/gittan-types").TOrgPolicy>>
+  readonly getTemplate: (teamId: string) => Promise<import("@bloomerab/gittan-types").TTeamTemplate | undefined>
   readonly getRepoFiles: (forgejoFullName: string) => Promise<ReadonlyArray<string>>
-  readonly getRepoConfig: (forgejoFullName: string) => Promise<{ steps: ReadonlyArray<import("@gittan/types").TPipelineStep> } | undefined>
+  readonly getRepoConfig: (forgejoFullName: string) => Promise<{ steps: ReadonlyArray<import("@bloomerab/gittan-types").TPipelineStep> } | undefined>
   readonly onPipelineResolved: (event: TPipelineEvent) => Promise<void>
 }
 

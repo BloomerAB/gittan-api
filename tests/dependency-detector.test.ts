@@ -140,7 +140,7 @@ describe("detectDependencies", () => {
         id: "types-id",
         name: "shared-types",
         orgId: "bloomer",
-        publishedPackages: ["@gittan/types"],
+        publishedPackages: ["@bloomerab/gittan-types"],
       },
     ]
 
@@ -149,7 +149,7 @@ describe("detectDependencies", () => {
       fetchFile: vi.fn().mockImplementation(async (_org: string, _repo: string, path: string) => {
         if (path === "package.json") {
           return JSON.stringify({
-            dependencies: { "@gittan/types": "^0.1.0" },
+            dependencies: { "@bloomerab/gittan-types": "^0.1.0" },
           })
         }
         return undefined
