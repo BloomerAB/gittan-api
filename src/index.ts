@@ -2,6 +2,8 @@ import { Client as ScyllaClient } from "cassandra-driver"
 import { connect as natsConnect } from "nats"
 
 import { loadConfig } from "./config/index.js"
+import { initializeSchema } from "./db/client.js"
+import { createTeamRepo } from "./db/team-repo.js"
 import { createServer } from "./server.js"
 
 const main = async (): Promise<void> => {
@@ -13,10 +15,15 @@ const main = async (): Promise<void> => {
     keyspace: config.scyllaKeyspace,
   })
 
+  await initializeSchema(config)
+
   const nats = await natsConnect({ servers: config.natsUrl })
+
+  const teamRepo = createTeamRepo(scylla)
 
   const app = createServer({
     config,
+    teamRepo,
     healthDependencies: [
       {
         name: "scylladb",
