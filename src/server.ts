@@ -8,6 +8,7 @@ import {
   registerHealthRoutes,
   type THealthDependency,
 } from "./paths/health.js"
+import { registerCodeProxyRoutes } from "./paths/code-proxy.js"
 import { registerHookRoutes } from "./paths/hooks.js"
 import { registerRepoActivityRoutes } from "./paths/repo-activity.js"
 import { registerRepoRoutes } from "./paths/repos.js"
@@ -43,6 +44,7 @@ export const createServer = (deps: TServerDeps): Express => {
     repoMetadata: deps.repoMetadata,
   })
   registerRepoActivityRoutes(router, deps.repoMetadata, deps.config)
+  registerCodeProxyRoutes(router, deps.config)
   app.use(router)
 
   return app
