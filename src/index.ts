@@ -3,11 +3,15 @@ import { connect as natsConnect } from "nats"
 
 import { loadConfig } from "./config/index.js"
 import { initializeSchema } from "./db/client.js"
+import { createRepoMetadataRepo } from "./db/repo-metadata.js"
 import { createTeamRepo } from "./db/team-repo.js"
+import { createForgejoClient } from "./integrations/forgejo.js"
 import { createServer } from "./server.js"
 
 const main = async (): Promise<void> => {
   const config = loadConfig()
+
+  await initializeSchema(config)
 
   const scylla = new ScyllaClient({
     contactPoints: config.scyllaHosts,
@@ -15,15 +19,17 @@ const main = async (): Promise<void> => {
     keyspace: config.scyllaKeyspace,
   })
 
-  await initializeSchema(config)
-
   const nats = await natsConnect({ servers: config.natsUrl })
 
   const teamRepo = createTeamRepo(scylla)
+  const repoMetadata = createRepoMetadataRepo(scylla)
+  const forgejo = createForgejoClient(config)
 
   const app = createServer({
     config,
     teamRepo,
+    repoMetadata,
+    forgejo,
     healthDependencies: [
       {
         name: "scylladb",
@@ -40,12 +46,7 @@ const main = async (): Promise<void> => {
       },
       {
         name: "forgejo",
-        check: async () => {
-          const res = await fetch(
-            `${config.forgejoUrl}/api/v1/version`,
-          )
-          return res.ok
-        },
+        check: () => forgejo.healthy(),
       },
     ],
   })

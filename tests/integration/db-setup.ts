@@ -32,6 +32,8 @@ export const cleanupTestDb = async (client: Client): Promise<void> => {
     "team_members",
     "orgs",
     "orgs_by_name",
+    "repos",
+    "repos_by_team",
     "pipeline_runs",
     "pipeline_runs_by_team",
   ]
