@@ -21,6 +21,7 @@
     "cassandra-driver": "^4.7.2",
     "express": "^5.1.0",
     "nats": "^2.29.3",
+    "yaml": "^2.9.0",
     "zod": "^3.25.67"
   },
   "devDependencies": {
