@@ -1,19 +1,7 @@
-FROM node:22-slim AS types-builder
-WORKDIR /types
-COPY types-build/package.json types-build/pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
-COPY types-build/tsconfig.json ./
-COPY types-build/src/ src/
-RUN pnpm build
-
 FROM node:22-slim AS builder
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-# Swap published dep for local build
-RUN corepack enable
-COPY --from=types-builder /types/ /types/
-RUN sed -i 's|"@bloomerab/gittan-types": ".*"|"@bloomerab/gittan-types": "file:/types"|' package.json
-RUN pnpm install --no-frozen-lockfile
+COPY package.json pnpm-lock.yaml .npmrc ./
+RUN corepack enable && pnpm install --frozen-lockfile
 COPY tsconfig.json ./
 COPY src/ src/
 RUN pnpm build

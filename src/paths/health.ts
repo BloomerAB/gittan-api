@@ -5,19 +5,15 @@ export type THealthDependency = {
   readonly check: () => Promise<boolean>
 }
 
-type THealthStatus = {
-  readonly status: "healthy" | "degraded"
-  readonly dependencies: ReadonlyArray<{
-    readonly name: string
-    readonly healthy: boolean
-  }>
-}
-
 export const registerHealthRoutes = (
   router: Router,
   dependencies: ReadonlyArray<THealthDependency>,
 ): void => {
-  router.get("/healthz", async (_req, res) => {
+  router.get("/healthz", (_req, res) => {
+    res.json({ status: "ok" })
+  })
+
+  router.get("/readyz", async (_req, res) => {
     const results = await Promise.all(
       dependencies.map(async (dep) => {
         try {
@@ -31,11 +27,9 @@ export const registerHealthRoutes = (
 
     const allHealthy = results.every((r) => r.healthy)
 
-    const body: THealthStatus = {
-      status: allHealthy ? "healthy" : "degraded",
+    res.status(allHealthy ? 200 : 503).json({
+      status: allHealthy ? "ready" : "degraded",
       dependencies: results,
-    }
-
-    res.status(allHealthy ? 200 : 503).json(body)
+    })
   })
 }
