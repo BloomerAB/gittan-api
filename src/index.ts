@@ -31,6 +31,7 @@ const main = async (): Promise<void> => {
     repoMetadata,
     forgejo,
     nats,
+    db: scylla,
     healthDependencies: [
       {
         name: "scylladb",

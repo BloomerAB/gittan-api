@@ -6,6 +6,22 @@ export const CREATE_KEYSPACE = `
 `
 
 export const CREATE_TABLES = [
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.users (
+    id text PRIMARY KEY,
+    email text,
+    name text,
+    org_id text,
+    role text,
+    is_active boolean,
+    created_at timestamp,
+    updated_at timestamp
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.users_by_email (
+    email text PRIMARY KEY,
+    user_id text
+  )`,
+
   `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.orgs (
     id text PRIMARY KEY,
     name text,

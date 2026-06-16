@@ -13,7 +13,9 @@ import { registerHookRoutes } from "./paths/hooks.js"
 import { registerRepoActivityRoutes } from "./paths/repo-activity.js"
 import { registerRepoRoutes } from "./paths/repos.js"
 import { registerTeamRoutes } from "./paths/teams.js"
+import { registerUserRoutes } from "./paths/users.js"
 
+import type { Client } from "cassandra-driver"
 import type { NatsConnection } from "nats"
 
 export type TServerDeps = {
@@ -23,6 +25,7 @@ export type TServerDeps = {
   readonly repoMetadata: TRepoMetadataRepo
   readonly forgejo: TForgejoClient
   readonly nats: NatsConnection
+  readonly db: Client
 }
 
 export const createServer = (deps: TServerDeps): Express => {
@@ -45,6 +48,7 @@ export const createServer = (deps: TServerDeps): Express => {
   })
   registerRepoActivityRoutes(router, deps.repoMetadata, deps.config)
   registerCodeProxyRoutes(router, deps.config)
+  registerUserRoutes(router, deps.db)
   app.use(router)
 
   return app
