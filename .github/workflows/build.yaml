@@ -22,7 +22,7 @@ jobs:
           registry-url: https://npm.pkg.github.com
       - run: pnpm install --frozen-lockfile
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: pnpm typecheck
       - run: pnpm test
 
@@ -50,3 +50,4 @@ jobs:
           context: .
           tags: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
           platforms: linux/arm64
+          build-args: NPM_TOKEN=${{ secrets.NPM_TOKEN }}
