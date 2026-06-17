@@ -28,7 +28,7 @@ jobs:
 
   build:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-arm
     permissions:
       contents: read
       packages: write
@@ -49,5 +49,4 @@ jobs:
           push: true
           context: .
           tags: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
-          platforms: linux/arm64
           build-args: NPM_TOKEN=${{ secrets.NPM_TOKEN }}
