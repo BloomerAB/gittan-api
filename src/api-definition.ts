@@ -73,6 +73,18 @@ const apiDoc: OpenAPIV3.Document = {
           repoCount: { type: "integer" },
         },
       },
+      Org: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          name: { type: "string" },
+          displayName: { type: "string" },
+          role: { type: "string", enum: ["owner", "admin", "member"] },
+          plan: { type: "string", enum: ["starter", "team"] },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
       Error: {
         type: "object",
         properties: {

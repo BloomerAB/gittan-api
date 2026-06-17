@@ -2,6 +2,7 @@ import type { Client } from "cassandra-driver"
 import type { NatsConnection } from "nats"
 
 import type { TConfig } from "./config/index.js"
+import type { TOrgRepo } from "./db/org-repo.js"
 import type { TRepoMetadataRepo } from "./db/repo-metadata.js"
 import type { TStepRegistry } from "./db/step-registry.js"
 import type { TTeamRepo } from "./db/team-repo.js"
@@ -12,6 +13,7 @@ export type TDeps = {
   readonly config: TConfig
   readonly db: Client
   readonly nats: NatsConnection
+  readonly orgRepo: TOrgRepo
   readonly teamRepo: TTeamRepo
   readonly repoMetadata: TRepoMetadataRepo
   readonly usageRepo: TUsageRepo

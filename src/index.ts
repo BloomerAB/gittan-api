@@ -3,6 +3,7 @@ import { connect as natsConnect } from "nats"
 
 import { loadConfig } from "./config/index.js"
 import { initializeSchema } from "./db/client.js"
+import { createOrgRepo } from "./db/org-repo.js"
 import { createRepoMetadataRepo } from "./db/repo-metadata.js"
 import { createStepRegistry } from "./db/step-registry.js"
 import { createTeamRepo } from "./db/team-repo.js"
@@ -25,6 +26,7 @@ const main = async (): Promise<void> => {
 
   const nats = await natsConnect({ servers: config.natsUrl })
 
+  const orgRepo = createOrgRepo(scylla)
   const teamRepo = createTeamRepo(scylla)
   const repoMetadata = createRepoMetadataRepo(scylla)
   const usageRepo = createUsageRepo(scylla)
@@ -35,6 +37,7 @@ const main = async (): Promise<void> => {
     config,
     db: scylla,
     nats,
+    orgRepo,
     teamRepo,
     repoMetadata,
     usageRepo,
