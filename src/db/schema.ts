@@ -156,4 +156,37 @@ export const CREATE_TABLES = [
     status text,
     PRIMARY KEY (team_id, started_at, run_id)
   ) WITH CLUSTERING ORDER BY (started_at DESC, run_id DESC)`,
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.org_plans (
+    org_id text PRIMARY KEY,
+    plan text,
+    ci_blocks int,
+    created_at timestamp,
+    updated_at timestamp
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.usage_events (
+    org_id text,
+    month text,
+    event_id text,
+    type text,
+    pipeline_run_id text,
+    team_id text,
+    repo_id text,
+    duration_ms bigint,
+    ci_minutes int,
+    created_at timestamp,
+    PRIMARY KEY ((org_id, month), event_id)
+  ) WITH CLUSTERING ORDER BY (event_id DESC)`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.org_usage_monthly (
+    org_id text,
+    month text,
+    ci_minutes_used int,
+    storage_bytes bigint,
+    user_count int,
+    team_count int,
+    repo_count int,
+    updated_at timestamp,
+    PRIMARY KEY (org_id, month)
+  ) WITH CLUSTERING ORDER BY (month DESC)`,
 ] as const

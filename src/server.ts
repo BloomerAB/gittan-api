@@ -1,55 +1,48 @@
-import express, { type Express } from "express"
+import type { Application, Request, Response } from "express"
+import { setupApp } from "@bloomerab/npm-api-essentials"
 
+import apiDoc from "./api-definition.js"
 import type { TConfig } from "./config/index.js"
-import type { TRepoMetadataRepo } from "./db/repo-metadata.js"
-import type { TTeamRepo } from "./db/team-repo.js"
-import type { TForgejoClient } from "./integrations/forgejo.js"
-import {
-  registerHealthRoutes,
-  type THealthDependency,
-} from "./paths/health.js"
-import { registerCodeProxyRoutes } from "./paths/code-proxy.js"
-import { registerHookRoutes } from "./paths/hooks.js"
-import { registerRepoActivityRoutes } from "./paths/repo-activity.js"
-import { registerRepoRoutes } from "./paths/repos.js"
-import { registerTeamRoutes } from "./paths/teams.js"
-import { registerUserRoutes } from "./paths/users.js"
 
-import type { Client } from "cassandra-driver"
-import type { NatsConnection } from "nats"
-
-export type TServerDeps = {
-  readonly config: TConfig
-  readonly healthDependencies: ReadonlyArray<THealthDependency>
-  readonly teamRepo: TTeamRepo
-  readonly repoMetadata: TRepoMetadataRepo
-  readonly forgejo: TForgejoClient
-  readonly nats: NatsConnection
-  readonly db: Client
+export type THealthDependency = {
+  readonly name: string
+  readonly check: () => Promise<boolean>
 }
 
-export const createServer = (deps: TServerDeps): Express => {
-  const app = express()
+export const createServer = async (
+  config: TConfig,
+  healthDependencies: ReadonlyArray<THealthDependency>,
+): Promise<Application> => {
+  process.env.OAUTH2_INTROSPECTION_URL = `${config.oauth2Issuer}/oauth/introspect`
+  process.env.OAUTH2_CLIENT_ID = config.oauth2ClientId
+  process.env.OAUTH2_CLIENT_SECRET = config.oauth2ClientSecret
 
-  app.use(express.json())
+  const app = await setupApp({
+    apiDoc: structuredClone(apiDoc),
+    pathPrefix: "",
+    paths: "paths",
+    corsString: "http://localhost:5555",
+  })
 
-  const router = express.Router()
-  registerHealthRoutes(router, deps.healthDependencies)
-  registerTeamRoutes(router, deps.teamRepo)
-  registerRepoRoutes(router, {
-    repoMetadata: deps.repoMetadata,
-    teamRepo: deps.teamRepo,
-    forgejo: deps.forgejo,
-    webhookBaseUrl: `http://localhost:${deps.config.port}`,
+  app.get("/readyz", async (_req: Request, res: Response) => {
+    const results = await Promise.all(
+      healthDependencies.map(async (dep) => {
+        try {
+          const healthy = await dep.check()
+          return { name: dep.name, healthy }
+        } catch {
+          return { name: dep.name, healthy: false }
+        }
+      }),
+    )
+
+    const allHealthy = results.every((r) => r.healthy)
+
+    res.status(allHealthy ? 200 : 503).json({
+      status: allHealthy ? "ready" : "degraded",
+      dependencies: results,
+    })
   })
-  registerHookRoutes(router, {
-    nats: deps.nats,
-    repoMetadata: deps.repoMetadata,
-  })
-  registerRepoActivityRoutes(router, deps.repoMetadata, deps.config)
-  registerCodeProxyRoutes(router, deps.config)
-  registerUserRoutes(router, deps.db)
-  app.use(router)
 
   return app
 }

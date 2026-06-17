@@ -2,7 +2,11 @@ import express from "express"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { TTeamRepo } from "../src/db/team-repo.js"
-import { registerTeamRoutes } from "../src/paths/teams.js"
+import { initDeps } from "../src/deps.js"
+import { GET, POST } from "../src/paths/orgs/[orgId]/teams/index.js"
+import { GET as GET_TEAM } from "../src/paths/orgs/[orgId]/teams/[teamId].js"
+import { POST as POST_MEMBER } from "../src/paths/teams/[teamId]/members/index.js"
+import { DELETE as DELETE_MEMBER } from "../src/paths/teams/[teamId]/members/[userId].js"
 
 const createMockTeamRepo = (): TTeamRepo => ({
   createTeam: vi.fn(),
@@ -14,12 +18,34 @@ const createMockTeamRepo = (): TTeamRepo => ({
   removeMember: vi.fn(),
 })
 
-const createTestApp = (repo: TTeamRepo) => {
+const stubDeps = (teamRepo: TTeamRepo) => {
+  initDeps({
+    config: {} as any,
+    db: {} as any,
+    nats: {} as any,
+    teamRepo,
+    repoMetadata: {} as any,
+    usageRepo: {} as any,
+    stepRegistry: {} as any,
+    forgejo: {} as any,
+  })
+}
+
+const injectUser = (orgId: string) =>
+  (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    ;(req as any).user = { id: "test-user", companyId: orgId, email: "test@test.com", role: "member" }
+    next()
+  }
+
+const createTestApp = () => {
   const app = express()
   app.use(express.json())
-  const router = express.Router()
-  registerTeamRoutes(router, repo)
-  app.use(router)
+  app.use(injectUser("org-1"))
+  app.get("/orgs/:orgId/teams", GET as any)
+  app.post("/orgs/:orgId/teams", POST as any)
+  app.get("/orgs/:orgId/teams/:teamId", GET_TEAM as any)
+  app.post("/teams/:teamId/members", POST_MEMBER as any)
+  app.delete("/teams/:teamId/members/:userId", DELETE_MEMBER as any)
   return app
 }
 
@@ -54,7 +80,8 @@ describe("team routes", () => {
 
   beforeEach(() => {
     repo = createMockTeamRepo()
-    app = createTestApp(repo)
+    stubDeps(repo)
+    app = createTestApp()
   })
 
   describe("POST /orgs/:orgId/teams", () => {

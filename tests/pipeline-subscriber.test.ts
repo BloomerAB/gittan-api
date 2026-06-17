@@ -2,11 +2,23 @@ import { connect, type NatsConnection, StringCodec } from "nats"
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import type { TRepoMetadataRepo } from "../src/db/repo-metadata.js"
+import type { TUsageRepo } from "../src/db/usage-repo.js"
 import {
   startPipelineSubscriber,
   type TPipelineEvent,
   type TSubscriberDeps,
 } from "../src/pipeline/subscriber.js"
+
+const createMockUsageRepo = (overrides: Partial<TUsageRepo> = {}): TUsageRepo => ({
+  getPlan: vi.fn().mockResolvedValue(undefined),
+  setPlan: vi.fn(),
+  recordPipelineUsage: vi.fn(),
+  getUsage: vi.fn().mockResolvedValue(undefined),
+  getUsageHistory: vi.fn().mockResolvedValue([]),
+  getEffectiveCiLimit: vi.fn().mockResolvedValue(2000),
+  updateCounts: vi.fn(),
+  ...overrides,
+})
 
 describe("pipeline subscriber (integration)", () => {
   let nats: NatsConnection
@@ -44,6 +56,7 @@ describe("pipeline subscriber (integration)", () => {
     const deps: TSubscriberDeps = {
       nats,
       repoMetadata: mockRepoMetadata,
+      usageRepo: createMockUsageRepo(),
       getPolicies: vi.fn().mockResolvedValue([
         {
           id: "p1",
@@ -115,5 +128,78 @@ describe("pipeline subscriber (integration)", () => {
 
     expect(resolved).toHaveLength(1)
     expect(resolved[0].pushEvent.id).toBe("push-test-123")
+  })
+
+  it("rejects pipeline when CI quota is exceeded", async () => {
+    const mockRepoMetadata: TRepoMetadataRepo = {
+      create: vi.fn(),
+      getById: vi.fn(),
+      getByForgejoName: vi.fn(),
+      listByTeam: vi.fn(),
+    }
+
+    const overQuotaUsageRepo = createMockUsageRepo({
+      getEffectiveCiLimit: vi.fn().mockResolvedValue(2000),
+      getUsage: vi.fn().mockResolvedValue({
+        orgId: "org-quota",
+        month: "2026-06",
+        ciMinutesUsed: 2100,
+        storageBytes: 0,
+        userCount: 1,
+        teamCount: 1,
+        repoCount: 1,
+        updatedAt: "2026-06-17T10:00:00Z",
+      }),
+    })
+
+    const deps: TSubscriberDeps = {
+      nats,
+      repoMetadata: mockRepoMetadata,
+      usageRepo: overQuotaUsageRepo,
+      getPolicies: vi.fn(),
+      getTemplate: vi.fn(),
+      getRepoFiles: vi.fn(),
+      getRepoConfig: vi.fn(),
+      onPipelineResolved: vi.fn(),
+    }
+
+    startPipelineSubscriber(deps)
+
+    const resultSub = nats.subscribe("gittan.pipeline.result")
+    const resultPromise = (async () => {
+      for await (const msg of resultSub) {
+        const data = JSON.parse(sc.decode(msg.data))
+        if (data.pushEventId === "push-quota-test") {
+          resultSub.unsubscribe()
+          return data
+        }
+      }
+    })()
+
+    nats.publish(
+      "gittan.push.gated",
+      sc.encode(
+        JSON.stringify({
+          id: "push-quota-test",
+          orgId: "org-quota",
+          teamId: "team-1",
+          repoId: "repo-1",
+          repoName: "my-repo",
+          branch: "main",
+          commits: [{ sha: "b".repeat(40), message: "fix: something", author: "malin", timestamp: "2026-06-17T10:00:00Z" }],
+          pusher: "malin",
+          timestamp: "2026-06-17T10:00:00Z",
+          isGated: true,
+        }),
+      ),
+    )
+
+    const result = await resultPromise
+    expect(result.status).toBe("failed")
+    expect(result.steps[0].stepName).toBe("quota-check")
+    expect(result.steps[0].error).toContain("quota exceeded")
+
+    expect(mockRepoMetadata.getById).not.toHaveBeenCalled()
+    expect(deps.onPipelineResolved).not.toHaveBeenCalled()
   })
 })

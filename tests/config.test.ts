@@ -14,6 +14,9 @@ describe("loadConfig", () => {
     vi.stubEnv("NATS_URL", "")
     vi.stubEnv("FORGEJO_URL", "")
     vi.stubEnv("FORGEJO_ADMIN_TOKEN", "")
+    vi.stubEnv("OAUTH2_ISSUER", "http://localhost:9000")
+    vi.stubEnv("OAUTH2_CLIENT_ID", "gittan-api")
+    vi.stubEnv("OAUTH2_CLIENT_SECRET", "test-secret-32-chars-minimum-ok")
   })
 
   afterEach(() => {

@@ -4,7 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { TRepoMetadataRepo } from "../src/db/repo-metadata.js"
 import type { TTeamRepo } from "../src/db/team-repo.js"
 import type { TForgejoClient } from "../src/integrations/forgejo.js"
-import { registerRepoRoutes, type TRepoDeps } from "../src/paths/repos.js"
+import { initDeps } from "../src/deps.js"
+import { POST } from "../src/paths/orgs/[orgId]/repos/index.js"
+import { GET as GET_REPO } from "../src/paths/orgs/[orgId]/repos/[repoId].js"
+import { GET as GET_TEAM_REPOS } from "../src/paths/teams/[teamId]/repos.js"
 
 const createMockForgejoClient = (): TForgejoClient => ({
   createOrg: vi.fn(),
@@ -33,15 +36,6 @@ const createMockTeamRepo = (): TTeamRepo => ({
   listMembers: vi.fn(),
   removeMember: vi.fn(),
 })
-
-const createTestApp = (deps: TRepoDeps) => {
-  const app = express()
-  app.use(express.json())
-  const router = express.Router()
-  registerRepoRoutes(router, deps)
-  app.use(router)
-  return app
-}
 
 const request = async (
   app: express.Express,
@@ -72,20 +66,31 @@ describe("repo routes", () => {
   let forgejo: TForgejoClient
   let repoMetadata: TRepoMetadataRepo
   let teamRepo: TTeamRepo
-  let deps: TRepoDeps
   let app: express.Express
 
   beforeEach(() => {
     forgejo = createMockForgejoClient()
     repoMetadata = createMockRepoMetadata()
     teamRepo = createMockTeamRepo()
-    deps = {
-      forgejo,
-      repoMetadata,
+    initDeps({
+      config: { port: 4000 } as any,
+      db: {} as any,
+      nats: {} as any,
       teamRepo,
-      webhookBaseUrl: "http://localhost:4000",
-    }
-    app = createTestApp(deps)
+      repoMetadata,
+      usageRepo: {} as any,
+      stepRegistry: {} as any,
+      forgejo,
+    })
+    app = express()
+    app.use(express.json())
+    app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+      ;(req as any).user = { id: "test-user", companyId: "org-1", email: "test@test.com", role: "member" }
+      next()
+    })
+    app.post("/orgs/:orgId/repos", POST as any)
+    app.get("/orgs/:orgId/repos/:repoId", GET_REPO as any)
+    app.get("/teams/:teamId/repos", GET_TEAM_REPOS as any)
   })
 
   describe("POST /orgs/:orgId/repos", () => {

@@ -2,6 +2,7 @@ import type { NatsConnection } from "nats"
 import { StringCodec } from "nats"
 
 import type { TRepoMetadataRepo } from "../db/repo-metadata.js"
+import type { TUsageRepo } from "../db/usage-repo.js"
 import { resolvePipeline, type TResolvedPipeline } from "./resolver.js"
 
 export type TPushEventMessage = {
@@ -30,6 +31,7 @@ export type TPipelineEvent = {
 export type TSubscriberDeps = {
   readonly nats: NatsConnection
   readonly repoMetadata: TRepoMetadataRepo
+  readonly usageRepo: TUsageRepo
   readonly getPolicies: (orgId: string) => Promise<ReadonlyArray<import("@bloomerab/gittan-types").TOrgPolicy>>
   readonly getTemplate: (teamId: string) => Promise<import("@bloomerab/gittan-types").TTeamTemplate | undefined>
   readonly getRepoFiles: (forgejoFullName: string) => Promise<ReadonlyArray<string>>
@@ -40,8 +42,49 @@ export type TSubscriberDeps = {
 export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
   const sc = StringCodec()
 
+  const rejectOverQuota = (pushEvent: TPushEventMessage): void => {
+    const now = new Date().toISOString()
+    deps.nats.publish(
+      "gittan.pipeline.result",
+      sc.encode(
+        JSON.stringify({
+          pushEventId: pushEvent.id,
+          orgId: pushEvent.orgId,
+          teamId: pushEvent.teamId,
+          repoId: pushEvent.repoId,
+          branch: pushEvent.branch,
+          isGated: pushEvent.isGated,
+          status: "failed",
+          steps: [
+            {
+              stepName: "quota-check",
+              status: "failed",
+              durationMs: 0,
+              source: "policy",
+              error: "CI minutes quota exceeded. Upgrade your plan or purchase additional CI blocks.",
+            },
+          ],
+          startedAt: now,
+          finishedAt: now,
+          durationMs: 0,
+        }),
+      ),
+    )
+  }
+
   const handlePush = async (data: Uint8Array): Promise<void> => {
     const pushEvent: TPushEventMessage = JSON.parse(sc.decode(data))
+
+    const [ciLimit, usage] = await Promise.all([
+      deps.usageRepo.getEffectiveCiLimit(pushEvent.orgId),
+      deps.usageRepo.getUsage(pushEvent.orgId),
+    ])
+
+    if (usage && ciLimit > 0 && usage.ciMinutesUsed >= ciLimit) {
+      console.warn(`Quota exceeded for org ${pushEvent.orgId}: ${usage.ciMinutesUsed}/${ciLimit} CI minutes`)
+      rejectOverQuota(pushEvent)
+      return
+    }
 
     const repoMeta = await deps.repoMetadata.getById(
       pushEvent.orgId,
@@ -76,6 +119,8 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
       sc.encode(
         JSON.stringify({
           pushEventId: pushEvent.id,
+          orgId: pushEvent.orgId,
+          teamId: pushEvent.teamId,
           repoId: pushEvent.repoId,
           branch: pushEvent.branch,
           isGated: pushEvent.isGated,

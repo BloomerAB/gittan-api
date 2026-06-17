@@ -4,8 +4,12 @@ import { connect as natsConnect } from "nats"
 import { loadConfig } from "./config/index.js"
 import { initializeSchema } from "./db/client.js"
 import { createRepoMetadataRepo } from "./db/repo-metadata.js"
+import { createStepRegistry } from "./db/step-registry.js"
 import { createTeamRepo } from "./db/team-repo.js"
+import { createUsageRepo } from "./db/usage-repo.js"
+import { initDeps } from "./deps.js"
 import { createForgejoClient } from "./integrations/forgejo.js"
+import { startUsageSubscriber } from "./pipeline/usage-subscriber.js"
 import { createServer } from "./server.js"
 
 const main = async (): Promise<void> => {
@@ -23,35 +27,40 @@ const main = async (): Promise<void> => {
 
   const teamRepo = createTeamRepo(scylla)
   const repoMetadata = createRepoMetadataRepo(scylla)
+  const usageRepo = createUsageRepo(scylla)
+  const stepRegistry = createStepRegistry(scylla)
   const forgejo = createForgejoClient(config)
 
-  const app = createServer({
+  initDeps({
     config,
+    db: scylla,
+    nats,
     teamRepo,
     repoMetadata,
+    usageRepo,
+    stepRegistry,
     forgejo,
-    nats,
-    db: scylla,
-    healthDependencies: [
-      {
-        name: "scylladb",
-        check: async () => {
-          await scylla.execute("SELECT now() FROM system.local")
-          return true
-        },
-      },
-      {
-        name: "nats",
-        check: async () => {
-          return !nats.isClosed()
-        },
-      },
-      {
-        name: "forgejo",
-        check: () => forgejo.healthy(),
-      },
-    ],
   })
+
+  startUsageSubscriber({ nats, usageRepo })
+
+  const app = await createServer(config, [
+    {
+      name: "scylladb",
+      check: async () => {
+        await scylla.execute("SELECT now() FROM system.local")
+        return true
+      },
+    },
+    {
+      name: "nats",
+      check: async () => !nats.isClosed(),
+    },
+    {
+      name: "forgejo",
+      check: () => forgejo.healthy(),
+    },
+  ])
 
   app.listen(config.port, config.host, () => {
     console.log(`gittan-api listening on ${config.host}:${config.port}`)

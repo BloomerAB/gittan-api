@@ -1,0 +1,2 @@
+overrides:
+  '@bloomerab/gittan-types': link:../types

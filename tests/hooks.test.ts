@@ -2,7 +2,8 @@ import express from "express"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { TRepoMetadataRepo } from "../src/db/repo-metadata.js"
-import { registerHookRoutes, type THookDeps } from "../src/paths/hooks.js"
+import { initDeps } from "../src/deps.js"
+import { POST } from "../src/paths/hooks/push.js"
 
 const createMockNats = () => ({
   publish: vi.fn(),
@@ -18,12 +19,26 @@ const createMockRepoMetadata = (): TRepoMetadataRepo => ({
   listByTeam: vi.fn(),
 })
 
-const createTestApp = (deps: THookDeps) => {
+const stubDeps = (
+  nats: ReturnType<typeof createMockNats>,
+  repoMetadata: TRepoMetadataRepo,
+) => {
+  initDeps({
+    config: {} as any,
+    db: {} as any,
+    nats: nats as any,
+    teamRepo: {} as any,
+    repoMetadata,
+    usageRepo: {} as any,
+    stepRegistry: {} as any,
+    forgejo: {} as any,
+  })
+}
+
+const createTestApp = () => {
   const app = express()
   app.use(express.json())
-  const router = express.Router()
-  registerHookRoutes(router, deps)
-  app.use(router)
+  app.post("/hooks/push", POST as any)
   return app
 }
 
@@ -77,10 +92,8 @@ describe("POST /hooks/push", () => {
   beforeEach(() => {
     nats = createMockNats()
     repoMetadata = createMockRepoMetadata()
-    app = createTestApp({
-      nats: nats as unknown as THookDeps["nats"],
-      repoMetadata,
-    })
+    stubDeps(nats, repoMetadata)
+    app = createTestApp()
   })
 
   it("publishes gated push event to NATS when branch is gated", async () => {
