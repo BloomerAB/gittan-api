@@ -4,7 +4,7 @@ import { assertOrgAccess, getAuthUser, param } from "../../../../auth/helpers.js
 import { deps } from "../../../../deps.js"
 
 export const DELETE = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { stepRegistry, auditRepo } = deps()
   const orgId = param(req, "orgId")

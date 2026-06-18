@@ -38,15 +38,28 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
   try {
     const name = parsed.data.name ?? slugify(parsed.data.displayName)
 
+    if (!name) {
+      res.status(400).json({ error: "Display name must contain at least one alphanumeric character" })
+      return
+    }
+
     const org = await orgRepo.create({
       id: randomUUID(),
       name,
       displayName: parsed.data.displayName,
     })
 
-    await db.execute(
-      `UPDATE ${KEYSPACE}.users SET org_id = ?, role = ? WHERE id = ?`,
-      [org.id, "org-admin", user.id],
+    await db.batch(
+      [
+        {
+          query: `UPDATE ${KEYSPACE}.users SET org_id = ?, role = ? WHERE id = ?`,
+          params: [org.id, "org-admin", user.id],
+        },
+        {
+          query: `INSERT INTO ${KEYSPACE}.users_by_org (org_id, user_id, email, name) VALUES (?, ?, ?, ?)`,
+          params: [org.id, user.id, user.email, user.email],
+        },
+      ],
       { prepare: true },
     )
 

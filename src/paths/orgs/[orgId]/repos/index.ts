@@ -19,7 +19,7 @@ const CreateRepoBody = z.object({
 })
 
 export const POST = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { repoMetadata, teamRepo, forgejo, config } = deps()
   const parsed = CreateRepoBody.safeParse(req.body)

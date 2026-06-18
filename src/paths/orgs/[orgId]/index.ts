@@ -5,7 +5,7 @@ import { assertOrgAccess, getAuthUser, param } from "../../../auth/helpers.js"
 import { deps } from "../../../deps.js"
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { orgRepo } = deps()
   const org = await orgRepo.getById(param(req, "orgId"))
@@ -25,7 +25,7 @@ const UpdateOrgBody = z.object({
 })
 
 export const PUT = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const parsed = UpdateOrgBody.safeParse(req.body)
   if (!parsed.success) {

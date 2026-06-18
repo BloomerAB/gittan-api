@@ -4,7 +4,7 @@ import { assertOrgAccess, getAuthUser, param } from "../../../../auth/helpers.js
 import { deps } from "../../../../deps.js"
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { policyRepo } = deps()
   const policy = await policyRepo.get(param(req, "orgId"), param(req, "policyId"))
@@ -18,7 +18,7 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
 }
 
 export const DELETE = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { policyRepo, auditRepo } = deps()
   const orgId = param(req, "orgId")

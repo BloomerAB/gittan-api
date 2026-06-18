@@ -5,7 +5,7 @@ import { assertOrgAccess, getAuthUser, param } from "../../../../auth/helpers.js
 import { deps } from "../../../../deps.js"
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { stepRegistry } = deps()
   const steps = await stepRegistry.list(param(req, "orgId"))
@@ -22,7 +22,7 @@ const RegisterStepBody = z.object({
 })
 
 export const POST = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const parsed = RegisterStepBody.safeParse(req.body)
   if (!parsed.success) {

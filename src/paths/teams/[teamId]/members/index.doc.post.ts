@@ -11,10 +11,9 @@ export const operation = {
       "application/json": {
         schema: {
           type: "object",
-          required: ["userId", "role"],
+          required: ["userId"],
           properties: {
             userId: { type: "string" },
-            role: { type: "string", enum: ["team-admin", "writer", "reader"] },
           },
         },
       },
@@ -24,5 +23,6 @@ export const operation = {
     201: { description: "Member added" },
     400: { $ref: "#/components/responses/BadRequest" },
     401: { $ref: "#/components/responses/NotAuthenticated" },
+    403: { $ref: "#/components/responses/Forbidden" },
   },
 }

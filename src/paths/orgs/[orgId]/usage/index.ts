@@ -12,7 +12,7 @@ const currentMonth = (): string => {
 }
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { usageRepo } = deps()
   const monthParsed = MonthParam.safeParse(req.query.month)

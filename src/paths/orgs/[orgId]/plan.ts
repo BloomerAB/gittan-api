@@ -12,7 +12,7 @@ const SetPlanBody = z.object({
 })
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { usageRepo } = deps()
   const plan = await usageRepo.getPlan(param(req, "orgId"))
@@ -39,7 +39,7 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
 }
 
 export const PUT = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { usageRepo } = deps()
   const parsed = SetPlanBody.safeParse(req.body)

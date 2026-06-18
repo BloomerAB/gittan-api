@@ -16,7 +16,7 @@ export const operation = {
       "application/json": {
         schema: {
           type: "object",
-          required: ["name", "displayName"],
+          required: ["displayName"],
           properties: {
             name: { type: "string", pattern: "^[a-z0-9-]+$", minLength: 1, maxLength: 64 },
             displayName: { type: "string", minLength: 1, maxLength: 128 },

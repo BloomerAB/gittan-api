@@ -6,21 +6,27 @@ import { z } from "zod"
 import { assertOrgAccess, getAuthUser, param } from "../../../../auth/helpers.js"
 import { deps } from "../../../../deps.js"
 
+const slugify = (input: string): string =>
+  input
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+
 const CreateTeamBody = z.object({
   name: z
     .string()
     .min(1)
     .max(64)
-    .regex(/^[a-z0-9-]+$/),
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
   displayName: z.string().min(1).max(128),
-  topology: z
-    .enum(["stream-aligned", "platform", "enabling", "complicated-subsystem"])
-    .default("stream-aligned"),
   slackChannel: z.string().optional(),
 })
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { teamRepo } = deps()
   const teams = await teamRepo.listTeams(param(req, "orgId"))
@@ -28,7 +34,7 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
 }
 
 export const POST = async (req: Request, res: Response): Promise<void> => {
-  if (!assertOrgAccess(req, res)) return
+  if (!(await assertOrgAccess(req, res))) return
 
   const { teamRepo, auditRepo } = deps()
   const parsed = CreateTeamBody.safeParse(req.body)
@@ -38,12 +44,20 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
   }
 
   const orgId = param(req, "orgId")
+  const name = parsed.data.name ?? slugify(parsed.data.displayName)
+
+  if (!name) {
+    res.status(400).json({ error: "Display name must contain at least one alphanumeric character" })
+    return
+  }
 
   try {
     const team = await teamRepo.createTeam({
       id: randomUUID(),
       orgId,
-      ...parsed.data,
+      name,
+      displayName: parsed.data.displayName,
+      slackChannel: parsed.data.slackChannel,
     })
 
     const user = getAuthUser(req)
@@ -54,7 +68,7 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
       action: "team.create",
       resourceType: "team",
       resourceId: team.id,
-      detail: `Created team "${team.name}"`,
+      detail: `Created team "${team.displayName}"`,
     })
 
     res.status(201).json(team)

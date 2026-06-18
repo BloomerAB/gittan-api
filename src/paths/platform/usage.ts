@@ -4,7 +4,7 @@ import { assertPlatformAdmin } from "../../auth/helpers.js"
 import { deps } from "../../deps.js"
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
-  if (!assertPlatformAdmin(req, res)) return
+  if (!(await assertPlatformAdmin(req, res))) return
 
   const { usageRepo } = deps()
   const allUsage = await usageRepo.listAllOrgUsage()

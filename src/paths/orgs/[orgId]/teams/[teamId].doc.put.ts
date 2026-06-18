@@ -14,10 +14,6 @@ export const operation = {
           type: "object",
           properties: {
             displayName: { type: "string", minLength: 1, maxLength: 128 },
-            topology: {
-              type: "string",
-              enum: ["stream-aligned", "platform", "enabling", "complicated-subsystem"],
-            },
             slackChannel: { type: "string", nullable: true },
           },
         },
