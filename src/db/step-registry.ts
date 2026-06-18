@@ -96,6 +96,14 @@ export const createStepRegistry = (client: Client) => ({
     }))
   },
 
+  remove: async (orgId: string, name: string): Promise<void> => {
+    await client.execute(
+      `DELETE FROM ${KEYSPACE}.step_definitions WHERE org_id = ? AND name = ?`,
+      [orgId, name],
+      { prepare: true },
+    )
+  },
+
   resolve: async (
     orgId: string,
     useRef: string,

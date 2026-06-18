@@ -19,6 +19,12 @@ export type TAddMemberInput = {
   readonly addedBy: string
 }
 
+export type TUpdateTeamInput = {
+  readonly displayName?: string
+  readonly topology?: TTopology
+  readonly slackChannel?: string | null
+}
+
 export const createTeamRepo = (client: Client) => ({
   createTeam: async (input: TCreateTeamInput): Promise<TTeam> => {
     const now = new Date().toISOString()
@@ -58,6 +64,53 @@ export const createTeamRepo = (client: Client) => ({
       topology,
       slackChannel: input.slackChannel,
       createdAt: now,
+      updatedAt: now,
+    }
+  },
+
+  updateTeam: async (orgId: string, teamId: string, input: TUpdateTeamInput): Promise<TTeam | undefined> => {
+    const existing = await client.execute(
+      `SELECT * FROM ${KEYSPACE}.teams WHERE org_id = ? AND id = ?`,
+      [orgId, teamId],
+      { prepare: true },
+    )
+
+    if (existing.rowLength === 0) return undefined
+
+    const row = existing.first()
+    const now = new Date().toISOString()
+
+    const displayName = input.displayName ?? (row.display_name as string)
+    const topology = input.topology ?? (row.topology as TTopology) ?? "stream-aligned"
+    const slackChannel = input.slackChannel !== undefined
+      ? input.slackChannel
+      : (row.slack_channel as string | null) ?? null
+
+    const batch = [
+      {
+        query: `UPDATE ${KEYSPACE}.teams
+                SET display_name = ?, topology = ?, slack_channel = ?, updated_at = ?
+                WHERE org_id = ? AND id = ?`,
+        params: [displayName, topology, slackChannel, now, orgId, teamId],
+      },
+      {
+        query: `UPDATE ${KEYSPACE}.teams_by_name
+                SET topology = ?
+                WHERE org_id = ? AND name = ?`,
+        params: [topology, orgId, row.name as string],
+      },
+    ]
+
+    await client.batch(batch, { prepare: true })
+
+    return {
+      id: teamId,
+      orgId,
+      name: row.name as string,
+      displayName,
+      topology,
+      slackChannel: slackChannel ?? undefined,
+      createdAt: (row.created_at as Date).toISOString(),
       updatedAt: now,
     }
   },

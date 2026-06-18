@@ -2,8 +2,10 @@ import { Client as ScyllaClient } from "cassandra-driver"
 import { connect as natsConnect } from "nats"
 
 import { loadConfig } from "./config/index.js"
+import { createAuditRepo } from "./db/audit-repo.js"
 import { initializeSchema } from "./db/client.js"
 import { createOrgRepo } from "./db/org-repo.js"
+import { createPolicyRepo } from "./db/policy-repo.js"
 import { createRepoMetadataRepo } from "./db/repo-metadata.js"
 import { createStepRegistry } from "./db/step-registry.js"
 import { createTeamRepo } from "./db/team-repo.js"
@@ -31,6 +33,8 @@ const main = async (): Promise<void> => {
   const repoMetadata = createRepoMetadataRepo(scylla)
   const usageRepo = createUsageRepo(scylla)
   const stepRegistry = createStepRegistry(scylla)
+  const policyRepo = createPolicyRepo(scylla)
+  const auditRepo = createAuditRepo(scylla)
   const forgejo = createForgejoClient(config)
 
   initDeps({
@@ -42,6 +46,8 @@ const main = async (): Promise<void> => {
     repoMetadata,
     usageRepo,
     stepRegistry,
+    policyRepo,
+    auditRepo,
     forgejo,
   })
 

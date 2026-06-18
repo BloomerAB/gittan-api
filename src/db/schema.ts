@@ -191,4 +191,31 @@ export const CREATE_TABLES = [
     updated_at timestamp,
     PRIMARY KEY (org_id, month)
   ) WITH CLUSTERING ORDER BY (month DESC)`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.org_policies (
+    org_id text,
+    id text,
+    name text,
+    description text,
+    match_files text,
+    match_team text,
+    match_name text,
+    steps text,
+    created_at timestamp,
+    updated_at timestamp,
+    PRIMARY KEY (org_id, id)
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.audit_log (
+    org_id text,
+    id timeuuid,
+    actor_id text,
+    actor_email text,
+    action text,
+    resource_type text,
+    resource_id text,
+    detail text,
+    created_at timestamp,
+    PRIMARY KEY (org_id, id)
+  ) WITH CLUSTERING ORDER BY (id DESC)`,
 ] as const

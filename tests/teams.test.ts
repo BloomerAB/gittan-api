@@ -1,6 +1,7 @@
 import express from "express"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import type { TAuditRepo } from "../src/db/audit-repo.js"
 import type { TTeamRepo } from "../src/db/team-repo.js"
 import { initDeps } from "../src/deps.js"
 import { GET, POST } from "../src/paths/orgs/[orgId]/teams/index.js"
@@ -10,6 +11,7 @@ import { DELETE as DELETE_MEMBER } from "../src/paths/teams/[teamId]/members/[us
 
 const createMockTeamRepo = (): TTeamRepo => ({
   createTeam: vi.fn(),
+  updateTeam: vi.fn(),
   getTeam: vi.fn(),
   getTeamByName: vi.fn(),
   listTeams: vi.fn(),
@@ -18,15 +20,23 @@ const createMockTeamRepo = (): TTeamRepo => ({
   removeMember: vi.fn(),
 })
 
-const stubDeps = (teamRepo: TTeamRepo) => {
+const createMockAuditRepo = (): TAuditRepo => ({
+  log: vi.fn().mockResolvedValue(undefined),
+  list: vi.fn(),
+})
+
+const stubDeps = (teamRepo: TTeamRepo, auditRepo: TAuditRepo) => {
   initDeps({
     config: {} as any,
     db: {} as any,
     nats: {} as any,
+    orgRepo: {} as any,
     teamRepo,
     repoMetadata: {} as any,
     usageRepo: {} as any,
     stepRegistry: {} as any,
+    policyRepo: {} as any,
+    auditRepo,
     forgejo: {} as any,
   })
 }
@@ -76,11 +86,13 @@ const request = async (
 
 describe("team routes", () => {
   let repo: TTeamRepo
+  let auditRepo: TAuditRepo
   let app: express.Express
 
   beforeEach(() => {
     repo = createMockTeamRepo()
-    stubDeps(repo)
+    auditRepo = createMockAuditRepo()
+    stubDeps(repo, auditRepo)
     app = createTestApp()
   })
 
@@ -208,7 +220,7 @@ describe("team routes", () => {
         userId: "user-1",
         role: "writer",
         addedAt: "2026-06-12T10:00:00Z",
-        addedBy: "system",
+        addedBy: "test-user",
       })
 
       const { status, body } = await request(

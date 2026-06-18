@@ -6,6 +6,8 @@ export type TOrg = {
   readonly id: string
   readonly name: string
   readonly displayName: string
+  readonly oidcIssuer?: string
+  readonly oidcClientId?: string
   readonly createdAt: string
   readonly updatedAt: string
 }
@@ -16,10 +18,18 @@ export type TCreateOrgInput = {
   readonly displayName: string
 }
 
+export type TUpdateOrgInput = {
+  readonly displayName?: string
+  readonly oidcIssuer?: string | null
+  readonly oidcClientId?: string | null
+}
+
 const rowToOrg = (row: Record<string, unknown>): TOrg => ({
   id: row.id as string,
   name: row.name as string,
   displayName: row.display_name as string,
+  oidcIssuer: (row.oidc_issuer as string | null) ?? undefined,
+  oidcClientId: (row.oidc_client_id as string | null) ?? undefined,
   createdAt: (row.created_at as Date).toISOString(),
   updatedAt: (row.updated_at as Date).toISOString(),
 })
@@ -70,6 +80,45 @@ export const createOrgRepo = (client: Client) => ({
 
     if (result.rowLength === 0) return undefined
     return rowToOrg(result.first())
+  },
+
+  update: async (id: string, input: TUpdateOrgInput): Promise<TOrg | undefined> => {
+    const existing = await client.execute(
+      `SELECT * FROM ${KEYSPACE}.orgs WHERE id = ?`,
+      [id],
+      { prepare: true },
+    )
+
+    if (existing.rowLength === 0) return undefined
+
+    const row = existing.first()
+    const now = new Date()
+
+    const displayName = input.displayName ?? (row.display_name as string)
+    const oidcIssuer = input.oidcIssuer !== undefined
+      ? input.oidcIssuer
+      : (row.oidc_issuer as string | null) ?? null
+    const oidcClientId = input.oidcClientId !== undefined
+      ? input.oidcClientId
+      : (row.oidc_client_id as string | null) ?? null
+
+    await client.execute(
+      `UPDATE ${KEYSPACE}.orgs
+       SET display_name = ?, oidc_issuer = ?, oidc_client_id = ?, updated_at = ?
+       WHERE id = ?`,
+      [displayName, oidcIssuer, oidcClientId, now, id],
+      { prepare: true },
+    )
+
+    return {
+      id,
+      name: row.name as string,
+      displayName,
+      oidcIssuer: oidcIssuer ?? undefined,
+      oidcClientId: oidcClientId ?? undefined,
+      createdAt: (row.created_at as Date).toISOString(),
+      updatedAt: now.toISOString(),
+    }
   },
 
   getByUserId: async (userId: string): Promise<TOrg[]> => {
