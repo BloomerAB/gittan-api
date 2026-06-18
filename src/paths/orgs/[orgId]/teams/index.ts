@@ -13,6 +13,9 @@ const CreateTeamBody = z.object({
     .max(64)
     .regex(/^[a-z0-9-]+$/),
   displayName: z.string().min(1).max(128),
+  topology: z
+    .enum(["stream-aligned", "platform", "enabling", "complicated-subsystem"])
+    .default("stream-aligned"),
   slackChannel: z.string().optional(),
 })
 

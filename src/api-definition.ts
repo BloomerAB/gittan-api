@@ -27,6 +27,15 @@ const apiDoc: OpenAPIV3.Document = {
           orgId: { type: "string" },
           name: { type: "string" },
           displayName: { type: "string" },
+          topology: {
+            type: "string",
+            enum: [
+              "stream-aligned",
+              "platform",
+              "enabling",
+              "complicated-subsystem",
+            ],
+          },
           slackChannel: { type: "string" },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
