@@ -7,12 +7,21 @@ import { getAuthUser } from "../../auth/helpers.js"
 import { deps } from "../../deps.js"
 import { KEYSPACE } from "../../db/schema.js"
 
+const slugify = (input: string): string =>
+  input
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+
 const CreateOrgBody = z.object({
   name: z
     .string()
     .min(1)
     .max(64)
-    .regex(/^[a-z0-9-]+$/),
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
   displayName: z.string().min(1).max(128),
 })
 
@@ -27,9 +36,11 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
+    const name = parsed.data.name ?? slugify(parsed.data.displayName)
+
     const org = await orgRepo.create({
       id: randomUUID(),
-      name: parsed.data.name,
+      name,
       displayName: parsed.data.displayName,
     })
 

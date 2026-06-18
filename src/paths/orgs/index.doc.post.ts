@@ -8,7 +8,7 @@ export const operation = {
       "application/json": {
         schema: {
           type: "object",
-          required: ["name", "displayName"],
+          required: ["displayName"],
           properties: {
             name: {
               type: "string",
