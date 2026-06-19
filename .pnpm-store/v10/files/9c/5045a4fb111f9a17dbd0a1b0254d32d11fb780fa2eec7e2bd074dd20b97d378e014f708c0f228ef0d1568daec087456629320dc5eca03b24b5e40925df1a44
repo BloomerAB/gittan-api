@@ -1,0 +1,15 @@
+import { BaseError } from './BaseError.js';
+
+class TooManyRequests extends BaseError {
+    constructor(message, externalCode) {
+        super({
+            externalCode: externalCode || 429,
+            internalCode: 429,
+            message: message || 'Too many requests in a given amount of time',
+        });
+        Error.captureStackTrace(this, TooManyRequests);
+    }
+}
+
+export { TooManyRequests as default };
+//# sourceMappingURL=TooManyRequests.js.map

@@ -1,0 +1,35 @@
+import Oauth2Error from '../../error/classes/Oauth2Error.js';
+import { OAUTH2_ERROR_TYPES } from '../../error/classes/oauth2_error.types.js';
+
+const authorizationHeader = (headers) => {
+    const authHeader = (headers.authorization || headers.Authorization);
+    if (!authHeader) {
+        throw new Oauth2Error({
+            internalCode: 400,
+            externalCode: 400,
+            error: OAUTH2_ERROR_TYPES.invalidRequest,
+            error_description: 'missing Authorization header',
+        });
+    }
+    const [scheme, token] = authHeader.split(' ');
+    if (scheme !== 'Bearer') {
+        throw new Oauth2Error({
+            internalCode: 400,
+            externalCode: 400,
+            error: OAUTH2_ERROR_TYPES.invalidRequest,
+            error_description: 'expected Authorization header to start with Bearer',
+        });
+    }
+    if (!token) {
+        throw new Oauth2Error({
+            internalCode: 400,
+            externalCode: 400,
+            error: OAUTH2_ERROR_TYPES.invalidRequest,
+            error_description: 'token is missing',
+        });
+    }
+    return token;
+};
+
+export { authorizationHeader as default };
+//# sourceMappingURL=authorization-header.js.map

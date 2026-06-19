@@ -1,0 +1,53 @@
+import Oauth2Error from '../../error/classes/Oauth2Error.js';
+import { OAUTH2_ERROR_TYPES } from '../../error/classes/oauth2_error.types.js';
+import request from '../../request/index.js';
+import validate from './scopes.js';
+
+const opaqueToken = async (token, requiredScopes, introspectionURL) => {
+    let introspectedToken;
+    try {
+        // Get client credentials from environment (required for RFC 7662 compliance)
+        const clientId = process.env.OAUTH2_CLIENT_ID;
+        const clientSecret = process.env.OAUTH2_CLIENT_SECRET;
+        if (!clientId || !clientSecret) {
+            throw new Error('OAUTH2_CLIENT_ID and OAUTH2_CLIENT_SECRET must be set for token introspection');
+        }
+        introspectedToken = await request.post({
+            url: introspectionURL,
+            body: {
+                token,
+                client_id: clientId,
+                client_secret: clientSecret,
+            },
+            headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+            },
+            retries: 1,
+            timeout: 500,
+            tracking: { from: 'bearerHandler', to: 'ory/introspect' },
+        });
+    }
+    catch (err) {
+        throw new Oauth2Error({
+            internalCode: 401,
+            externalCode: 401,
+            error: OAUTH2_ERROR_TYPES.accessDenied,
+            error_description: `Introspection of token failed: ${err.message}`,
+        });
+    }
+    if (!introspectedToken.data.active)
+        throw new Oauth2Error({
+            internalCode: 401,
+            externalCode: 401,
+            error: OAUTH2_ERROR_TYPES.accessDenied,
+            error_description: 'Token has expired',
+        });
+    const scopes = introspectedToken.data.scope
+        ? introspectedToken.data.scope.split(' ')
+        : [];
+    validate.scopes(requiredScopes, scopes);
+    return introspectedToken.data;
+};
+
+export { opaqueToken as default };
+//# sourceMappingURL=opaque-token.js.map

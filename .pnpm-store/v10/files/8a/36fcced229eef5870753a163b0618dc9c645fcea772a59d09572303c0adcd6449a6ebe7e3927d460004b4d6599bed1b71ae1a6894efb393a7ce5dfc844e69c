@@ -1,0 +1,15 @@
+import { BaseError } from './BaseError.js';
+
+class NotImplemented extends BaseError {
+    constructor(message, externalCode) {
+        super({
+            externalCode: externalCode || 501,
+            internalCode: 501,
+            message: message || 'Not implemented',
+        });
+        Error.captureStackTrace(this, NotImplemented);
+    }
+}
+
+export { NotImplemented as default };
+//# sourceMappingURL=NotImplemented.js.map

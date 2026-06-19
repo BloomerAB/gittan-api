@@ -1,0 +1,360 @@
+import { z } from "zod";
+export declare const StepServiceSchema: z.ZodObject<{
+    image: z.ZodString;
+    env: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+}, "strip", z.ZodTypeAny, {
+    image: string;
+    env?: Record<string, string> | undefined;
+}, {
+    image: string;
+    env?: Record<string, string> | undefined;
+}>;
+export type TStepService = z.infer<typeof StepServiceSchema>;
+export declare const PipelineStepSchema: z.ZodObject<{
+    name: z.ZodString;
+    image: z.ZodOptional<z.ZodString>;
+    use: z.ZodOptional<z.ZodString>;
+    with: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+    run: z.ZodOptional<z.ZodString>;
+    needs: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    only: z.ZodOptional<z.ZodString>;
+    cache: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    artifacts: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    secrets: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    services: z.ZodOptional<z.ZodArray<z.ZodUnion<[z.ZodString, z.ZodObject<{
+        image: z.ZodString;
+        env: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+    }, "strip", z.ZodTypeAny, {
+        image: string;
+        env?: Record<string, string> | undefined;
+    }, {
+        image: string;
+        env?: Record<string, string> | undefined;
+    }>]>, "many">>;
+    timeout: z.ZodDefault<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    timeout: string;
+    with?: Record<string, string> | undefined;
+    image?: string | undefined;
+    use?: string | undefined;
+    run?: string | undefined;
+    needs?: string[] | undefined;
+    only?: string | undefined;
+    cache?: string[] | undefined;
+    artifacts?: string[] | undefined;
+    secrets?: string[] | undefined;
+    services?: (string | {
+        image: string;
+        env?: Record<string, string> | undefined;
+    })[] | undefined;
+}, {
+    name: string;
+    with?: Record<string, string> | undefined;
+    image?: string | undefined;
+    use?: string | undefined;
+    run?: string | undefined;
+    needs?: string[] | undefined;
+    only?: string | undefined;
+    cache?: string[] | undefined;
+    artifacts?: string[] | undefined;
+    secrets?: string[] | undefined;
+    services?: (string | {
+        image: string;
+        env?: Record<string, string> | undefined;
+    })[] | undefined;
+    timeout?: string | undefined;
+}>;
+export type TPipelineStep = z.infer<typeof PipelineStepSchema>;
+export declare const ReviewStepSchema: z.ZodObject<{
+    name: z.ZodLiteral<"review">;
+    require: z.ZodDefault<z.ZodNumber>;
+    from: z.ZodDefault<z.ZodEnum<["writers", "admins"]>>;
+    autoAssign: z.ZodDefault<z.ZodEnum<["blame", "round-robin", "none"]>>;
+    needs: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    skipFor: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+}, "strip", z.ZodTypeAny, {
+    name: "review";
+    require: number;
+    from: "writers" | "admins";
+    autoAssign: "blame" | "round-robin" | "none";
+    needs?: string[] | undefined;
+    skipFor?: string[] | undefined;
+}, {
+    name: "review";
+    needs?: string[] | undefined;
+    require?: number | undefined;
+    from?: "writers" | "admins" | undefined;
+    autoAssign?: "blame" | "round-robin" | "none" | undefined;
+    skipFor?: string[] | undefined;
+}>;
+export type TReviewStep = z.infer<typeof ReviewStepSchema>;
+export declare const NotifyChannelSchema: z.ZodObject<{
+    channel: z.ZodEnum<["team-slack", "author", "webhook"]>;
+    target: z.ZodOptional<z.ZodString>;
+    template: z.ZodDefault<z.ZodEnum<["compact", "detailed"]>>;
+}, "strip", z.ZodTypeAny, {
+    channel: "team-slack" | "author" | "webhook";
+    template: "compact" | "detailed";
+    target?: string | undefined;
+}, {
+    channel: "team-slack" | "author" | "webhook";
+    target?: string | undefined;
+    template?: "compact" | "detailed" | undefined;
+}>;
+export type TNotifyChannel = z.infer<typeof NotifyChannelSchema>;
+export declare const NotifyConfigSchema: z.ZodObject<{
+    onFailure: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        channel: z.ZodEnum<["team-slack", "author", "webhook"]>;
+        target: z.ZodOptional<z.ZodString>;
+        template: z.ZodDefault<z.ZodEnum<["compact", "detailed"]>>;
+    }, "strip", z.ZodTypeAny, {
+        channel: "team-slack" | "author" | "webhook";
+        template: "compact" | "detailed";
+        target?: string | undefined;
+    }, {
+        channel: "team-slack" | "author" | "webhook";
+        target?: string | undefined;
+        template?: "compact" | "detailed" | undefined;
+    }>, "many">>;
+    onReviewNeeded: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        channel: z.ZodEnum<["team-slack", "author", "webhook"]>;
+        target: z.ZodOptional<z.ZodString>;
+        template: z.ZodDefault<z.ZodEnum<["compact", "detailed"]>>;
+    }, "strip", z.ZodTypeAny, {
+        channel: "team-slack" | "author" | "webhook";
+        template: "compact" | "detailed";
+        target?: string | undefined;
+    }, {
+        channel: "team-slack" | "author" | "webhook";
+        target?: string | undefined;
+        template?: "compact" | "detailed" | undefined;
+    }>, "many">>;
+}, "strip", z.ZodTypeAny, {
+    onFailure?: {
+        channel: "team-slack" | "author" | "webhook";
+        template: "compact" | "detailed";
+        target?: string | undefined;
+    }[] | undefined;
+    onReviewNeeded?: {
+        channel: "team-slack" | "author" | "webhook";
+        template: "compact" | "detailed";
+        target?: string | undefined;
+    }[] | undefined;
+}, {
+    onFailure?: {
+        channel: "team-slack" | "author" | "webhook";
+        target?: string | undefined;
+        template?: "compact" | "detailed" | undefined;
+    }[] | undefined;
+    onReviewNeeded?: {
+        channel: "team-slack" | "author" | "webhook";
+        target?: string | undefined;
+        template?: "compact" | "detailed" | undefined;
+    }[] | undefined;
+}>;
+export type TNotifyConfig = z.infer<typeof NotifyConfigSchema>;
+export declare const PipelineConfigSchema: z.ZodObject<{
+    steps: z.ZodArray<z.ZodUnion<[z.ZodObject<{
+        name: z.ZodString;
+        image: z.ZodOptional<z.ZodString>;
+        use: z.ZodOptional<z.ZodString>;
+        with: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+        run: z.ZodOptional<z.ZodString>;
+        needs: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        only: z.ZodOptional<z.ZodString>;
+        cache: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        artifacts: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        secrets: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        services: z.ZodOptional<z.ZodArray<z.ZodUnion<[z.ZodString, z.ZodObject<{
+            image: z.ZodString;
+            env: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+        }, "strip", z.ZodTypeAny, {
+            image: string;
+            env?: Record<string, string> | undefined;
+        }, {
+            image: string;
+            env?: Record<string, string> | undefined;
+        }>]>, "many">>;
+        timeout: z.ZodDefault<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        timeout: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+    }, {
+        name: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+        timeout?: string | undefined;
+    }>, z.ZodObject<{
+        name: z.ZodLiteral<"review">;
+        require: z.ZodDefault<z.ZodNumber>;
+        from: z.ZodDefault<z.ZodEnum<["writers", "admins"]>>;
+        autoAssign: z.ZodDefault<z.ZodEnum<["blame", "round-robin", "none"]>>;
+        needs: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        skipFor: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    }, "strip", z.ZodTypeAny, {
+        name: "review";
+        require: number;
+        from: "writers" | "admins";
+        autoAssign: "blame" | "round-robin" | "none";
+        needs?: string[] | undefined;
+        skipFor?: string[] | undefined;
+    }, {
+        name: "review";
+        needs?: string[] | undefined;
+        require?: number | undefined;
+        from?: "writers" | "admins" | undefined;
+        autoAssign?: "blame" | "round-robin" | "none" | undefined;
+        skipFor?: string[] | undefined;
+    }>]>, "many">;
+    notify: z.ZodOptional<z.ZodObject<{
+        onFailure: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            channel: z.ZodEnum<["team-slack", "author", "webhook"]>;
+            target: z.ZodOptional<z.ZodString>;
+            template: z.ZodDefault<z.ZodEnum<["compact", "detailed"]>>;
+        }, "strip", z.ZodTypeAny, {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }, {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }>, "many">>;
+        onReviewNeeded: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            channel: z.ZodEnum<["team-slack", "author", "webhook"]>;
+            target: z.ZodOptional<z.ZodString>;
+            template: z.ZodDefault<z.ZodEnum<["compact", "detailed"]>>;
+        }, "strip", z.ZodTypeAny, {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }, {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }>, "many">>;
+    }, "strip", z.ZodTypeAny, {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+    }, {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+    }>>;
+}, "strip", z.ZodTypeAny, {
+    steps: ({
+        name: string;
+        timeout: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+    } | {
+        name: "review";
+        require: number;
+        from: "writers" | "admins";
+        autoAssign: "blame" | "round-robin" | "none";
+        needs?: string[] | undefined;
+        skipFor?: string[] | undefined;
+    })[];
+    notify?: {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+    } | undefined;
+}, {
+    steps: ({
+        name: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+        timeout?: string | undefined;
+    } | {
+        name: "review";
+        needs?: string[] | undefined;
+        require?: number | undefined;
+        from?: "writers" | "admins" | undefined;
+        autoAssign?: "blame" | "round-robin" | "none" | undefined;
+        skipFor?: string[] | undefined;
+    })[];
+    notify?: {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+    } | undefined;
+}>;
+export type TPipelineConfig = z.infer<typeof PipelineConfigSchema>;
+//# sourceMappingURL=pipeline.d.ts.map

@@ -1,0 +1,11 @@
+/**
+ *
+ * @param obj The object or class prototype to mock
+ * @param method The method on the object/class to be mocked
+ * @param retVal What the mocked method should return
+ * @returns A Jest Spy Instance
+ * @remarks Class methods can not be mocked with arrow functions,
+ * instead use a regular function like so: `function() {}`
+ */
+declare const mock: (obj: any, method: string, retVal: any) => import("vitest").MockInstance<(this: unknown, ...args: unknown[]) => unknown>;
+export default mock;

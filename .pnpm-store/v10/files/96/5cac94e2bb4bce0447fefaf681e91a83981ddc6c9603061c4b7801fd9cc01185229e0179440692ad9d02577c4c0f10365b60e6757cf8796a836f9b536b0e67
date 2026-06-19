@@ -1,0 +1,2 @@
+declare const opaqueToken: (token: any, requiredScopes: Array<string>, introspectionURL: string) => Promise<any>;
+export default opaqueToken;

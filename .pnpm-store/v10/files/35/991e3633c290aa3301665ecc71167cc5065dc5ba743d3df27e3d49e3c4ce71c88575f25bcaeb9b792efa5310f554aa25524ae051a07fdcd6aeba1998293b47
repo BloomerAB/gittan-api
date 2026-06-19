@@ -1,0 +1,18 @@
+import generateRandomString from '../util/generate-random-string.js';
+
+class BaseError extends Error {
+    externalCode;
+    internalCode;
+    message;
+    trackingNumber;
+    constructor({ message, internalCode, externalCode }) {
+        super(message);
+        this.message = message;
+        this.externalCode = externalCode || 500;
+        this.internalCode = internalCode || 500;
+        this.trackingNumber = generateRandomString(10);
+    }
+}
+
+export { BaseError };
+//# sourceMappingURL=BaseError.js.map

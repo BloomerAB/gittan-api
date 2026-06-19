@@ -1,0 +1,6 @@
+import errorHandler from './errorHandler.js';
+
+var middleware = { errorHandler };
+
+export { middleware as default };
+//# sourceMappingURL=index.js.map

@@ -1,0 +1,17 @@
+// Note that SchemaValidationFunction from AJV used by express-openapi - seems to be incompatible with what is actually sent in. This is why we use any everywhere
+const validate = (schema, data, _parentSchema, dataPath) => {
+    if (schema) {
+        dataPath.parentData[dataPath.parentDataProperty] = data.toLowerCase();
+    }
+    // Your validation logic here, returning either true or false
+    return true; // Or return a boolean based on your validation logic
+};
+const convertToLowercase = {
+    modifying: true, // We are modifying data.
+    errors: false, // If this fails, it has nothing to do with the user
+    validate,
+    keyword: 'x-convert-to-lower',
+};
+
+export { convertToLowercase };
+//# sourceMappingURL=convert-to-lower-case.js.map

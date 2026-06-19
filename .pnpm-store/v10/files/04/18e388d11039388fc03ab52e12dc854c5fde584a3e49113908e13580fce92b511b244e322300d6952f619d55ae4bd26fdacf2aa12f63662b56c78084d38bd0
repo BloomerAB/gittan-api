@@ -1,0 +1,23 @@
+declare const AUTH_ERROR_TYPE: {
+    readonly MissingAuthHeader: "MissingAuthHeader";
+    readonly ExpectedBearerFormatting: "ExpectedBearerFormatting";
+    readonly MissingRequiredScopes: "MissingRequiredScopes";
+    readonly Unknown: "Unknown";
+};
+type TAuthError = (typeof AUTH_ERROR_TYPE)[keyof typeof AUTH_ERROR_TYPE];
+declare const OAUTH2_ERROR_TYPES: {
+    readonly userGone: "user_gone";
+    readonly invalidRequest: "invalid_request";
+    readonly unauthorizedClient: "unauthorized_client";
+    readonly accessDenied: "access_denied";
+    readonly unsupportedResponseType: "unsupported_response_type";
+    readonly invalidGrant: "invalid_grant";
+    readonly invalidClient: "invalid_client";
+    readonly invalidScope: "invalid_scope";
+    readonly serverError: "server_error";
+    readonly temporarilyUnavailable: "temporarily_unavailable";
+    readonly unsupportedGrantType: "unsupported_grant_type";
+    readonly invalidToken: "invalid_token";
+};
+type TOauth2Error = (typeof OAUTH2_ERROR_TYPES)[keyof typeof OAUTH2_ERROR_TYPES];
+export { OAUTH2_ERROR_TYPES, type TOauth2Error, type TAuthError };

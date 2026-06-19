@@ -1,0 +1,8 @@
+import { reportHistogram } from './reporter.js';
+
+const reportExternalCall = ({ to, from, code, elapsedMs, }) => {
+    reportHistogram('external_calls_histogram', 'Measures calls to external parties', { to, from, code }, elapsedMs);
+};
+
+export { reportExternalCall };
+//# sourceMappingURL=custom-reporter.js.map

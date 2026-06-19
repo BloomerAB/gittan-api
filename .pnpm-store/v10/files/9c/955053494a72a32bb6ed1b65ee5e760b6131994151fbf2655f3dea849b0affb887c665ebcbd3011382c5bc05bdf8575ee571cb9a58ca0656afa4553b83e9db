@@ -1,0 +1,137 @@
+import BadRequest from '../error/classes/BadRequest.js';
+import Conflict from '../error/classes/Conflict.js';
+import ConnectionAborted from '../error/classes/ConnectionAborted.js';
+import InternalServerError from '../error/classes/InternalServerError.js';
+import NotImplemented from '../error/classes/NotImplemented.js';
+import Oauth2Error from '../error/classes/Oauth2Error.js';
+import PageNotFound from '../error/classes/PageNotFound.js';
+import ResourceNotFound from '../error/classes/ResourceNotFound.js';
+import TooManyRequests from '../error/classes/TooManyRequests.js';
+import { OAUTH2_ERROR_TYPES } from '../error/classes/oauth2_error.types.js';
+
+const onRequestDebug = (config) => {
+    console.debug(`--> ${config.method.toUpperCase()} ${config.url}`); // eslint-disable-line no-console
+    console.debug('--> HEADERS %o', config.headers); // eslint-disable-line no-console
+    if (config.data) {
+        console.debug('--> BODY %s', config.data); // eslint-disable-line no-console
+    }
+    return config;
+};
+const onRequestErrorDebug = (error) => error;
+const onResponseDebug = (resp) => {
+    // eslint-disable-next-line no-console
+    console.debug('<-- %i FROM %s %s', resp.status, resp.config.method.toUpperCase(), resp.config.url);
+    console.debug('<-- HEADERS %o', resp.headers); // eslint-disable-line no-console
+    if (resp.data) {
+        console.debug('<-- BODY %s', resp.data); // eslint-disable-line no-console
+    }
+    return resp;
+};
+const onResponseErrorDebug = (error) => {
+    if (error.response &&
+        error.response.status > 400 &&
+        error.response.status < 500)
+        return;
+    // eslint-disable-next-line no-console
+    console.debug('<-- %i FROM %s %s', error.response.status, error.config.method.toUpperCase(), error.config.url);
+    console.debug('<-- HEADERS %o', error.response.headers); // eslint-disable-line no-console
+    if (error.response && error.response.data) {
+        console.debug('<-- BODY %s', error.response.data); // eslint-disable-line no-console
+    }
+    return error;
+};
+const onErrorFormatException = (error) => {
+    let statusCode = error?.response?.status;
+    const responseData = error?.response?.data;
+    let message = responseData?.message || error.message || 'Unknown error';
+    // http request related errors
+    if (error.isAxiosError) {
+        // patch missing status codes
+        if (error.code === 'ENOTFOUND') {
+            statusCode = 502;
+            message = `${message} (DNS failure)`;
+        }
+        else if (error.code === 'ECONNABORTED') {
+            statusCode = 502;
+            message = `${message} (Timeout)`;
+        }
+        else if (error.code === 'ECONNREFUSED') {
+            statusCode = 502;
+            message = `${message} (Server refused connection)`;
+        }
+        else if (error.code === 'ENETUNREACH') {
+            statusCode = 502;
+            message = `${message} (Network unreachable)`;
+        }
+        else if (error.code === 'EAI_AGAIN') {
+            statusCode = 502;
+            message = `${message} (Temporary DNS Failure)`;
+        }
+        else if (error.code === 'EHOSTUNREACH') {
+            statusCode = 502;
+            message = `${message} (Host unreachable)`;
+        }
+        // Log default error message with downstream response details
+        // eslint-disable-next-line no-console
+        console.error(JSON.stringify({
+            source: 'axios-interceptor',
+            statusCode,
+            message: `Failed to call out - ${message}`,
+            request: {
+                url: error.request?.path || error.config.url,
+                method: error.request?.method || error.config.method,
+            },
+            // Include downstream response details for debugging
+            ...(error.response?.data && {
+                downstreamResponse: error.response.data,
+            }),
+        }));
+        // is the error an oauth2 error?
+        if (error.response &&
+            error.response.data
+                .error &&
+            error.response.data
+                .error_description) {
+            const data = error.response.data;
+            throw new Oauth2Error({
+                externalCode: 500,
+                internalCode: error.response.status,
+                error: data.error,
+                error_description: data.error_description,
+            });
+        }
+        if (statusCode === 400) {
+            throw new BadRequest(message, 500);
+        }
+        if (statusCode === 401)
+            throw new Oauth2Error({
+                internalCode: 401,
+                externalCode: 500,
+                error: OAUTH2_ERROR_TYPES.accessDenied,
+                error_description: `${error.message} (Unknown error)`,
+            });
+        if (statusCode === 403)
+            throw new Oauth2Error({
+                internalCode: 403,
+                externalCode: 500,
+                error: OAUTH2_ERROR_TYPES.accessDenied,
+                error_description: `${error.message} (Unknown error)`,
+            });
+        else if (statusCode === 404)
+            throw new PageNotFound(message, 500);
+        else if (statusCode === 409)
+            throw new Conflict(message, 500);
+        else if (statusCode === 422)
+            throw new ResourceNotFound(message, 500);
+        else if (statusCode === 429)
+            throw new TooManyRequests(message, 500);
+        else if (statusCode === 501)
+            throw new NotImplemented(message, 500);
+        else if (statusCode === 502)
+            throw new ConnectionAborted();
+    }
+    throw new InternalServerError({ message: message ?? error.message });
+};
+
+export { onErrorFormatException, onRequestDebug, onRequestErrorDebug, onResponseDebug, onResponseErrorDebug };
+//# sourceMappingURL=interceptors.js.map

@@ -1,0 +1,7 @@
+declare const convertToLowercase: {
+    modifying: boolean;
+    errors: boolean;
+    validate: (schema: any, data: any, _parentSchema?: object, dataPath?: any) => boolean;
+    keyword: string;
+};
+export { convertToLowercase };

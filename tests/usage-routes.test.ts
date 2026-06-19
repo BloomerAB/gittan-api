@@ -18,10 +18,18 @@ const createMockUsageRepo = (overrides: Partial<TUsageRepo> = {}): TUsageRepo =>
   ...overrides,
 })
 
+const mockDb = {
+  execute: vi.fn().mockResolvedValue({
+    rowLength: 1,
+    first: () => ({ org_id: "org-1" }),
+  }),
+  batch: vi.fn(),
+} as any
+
 const stubDeps = (usageRepo: TUsageRepo) => {
   initDeps({
     config: {} as any,
-    db: {} as any,
+    db: mockDb,
     nats: {} as any,
     teamRepo: {} as any,
     repoMetadata: {} as any,

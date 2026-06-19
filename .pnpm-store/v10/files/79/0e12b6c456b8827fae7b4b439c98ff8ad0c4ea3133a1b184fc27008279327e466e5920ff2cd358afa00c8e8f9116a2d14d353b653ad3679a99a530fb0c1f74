@@ -1,0 +1,8 @@
+type TExternalCallProps = {
+    to: string;
+    from: string;
+    code: string;
+    elapsedMs: number;
+};
+declare const reportExternalCall: ({ to, from, code, elapsedMs, }: TExternalCallProps) => void;
+export { reportExternalCall };

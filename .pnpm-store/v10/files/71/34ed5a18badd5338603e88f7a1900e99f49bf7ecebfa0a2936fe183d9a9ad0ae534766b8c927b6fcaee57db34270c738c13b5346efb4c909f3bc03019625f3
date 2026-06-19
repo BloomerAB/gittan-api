@@ -1,0 +1,54 @@
+import { z } from "zod";
+export const PlanTypeSchema = z.enum(["starter", "team"]);
+export const OrgPlanSchema = z.object({
+    orgId: z.string().min(1),
+    plan: PlanTypeSchema,
+    ciMinutesLimit: z.number().int().min(0),
+    ciBlocks: z.number().int().min(0).default(0),
+    storageLimitGb: z.number().int().min(0),
+    userLimit: z.number().int().min(0),
+    teamLimit: z.number().int().min(0),
+    repoLimit: z.number().int().min(0),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+});
+export const PLAN_LIMITS = {
+    starter: {
+        ciMinutesLimit: 2_000,
+        storageLimitGb: 20,
+        userLimit: 2,
+        teamLimit: 2,
+        repoLimit: 10,
+    },
+    team: {
+        ciMinutesLimit: 10_000,
+        storageLimitGb: 100,
+        userLimit: 0,
+        teamLimit: 0,
+        repoLimit: 0,
+    },
+};
+export const UsageEventSchema = z.object({
+    orgId: z.string().min(1),
+    month: z.string().regex(/^\d{4}-\d{2}$/),
+    eventId: z.string().min(1),
+    type: z.enum(["pipeline_run"]),
+    pipelineRunId: z.string().min(1),
+    teamId: z.string().min(1),
+    repoId: z.string().min(1),
+    durationMs: z.number().int().min(0),
+    ciMinutes: z.number().int().min(0),
+    createdAt: z.string().datetime(),
+});
+export const OrgUsageSchema = z.object({
+    orgId: z.string().min(1),
+    month: z.string().regex(/^\d{4}-\d{2}$/),
+    ciMinutesUsed: z.number().int().min(0),
+    ciMinutesLimit: z.number().int().min(0),
+    storageBytes: z.number().int().min(0),
+    userCount: z.number().int().min(0),
+    teamCount: z.number().int().min(0),
+    repoCount: z.number().int().min(0),
+    updatedAt: z.string().datetime(),
+});
+//# sourceMappingURL=usage.js.map

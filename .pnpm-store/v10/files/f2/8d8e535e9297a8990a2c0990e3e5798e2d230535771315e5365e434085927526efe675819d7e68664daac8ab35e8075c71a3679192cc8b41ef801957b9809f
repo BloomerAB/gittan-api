@@ -1,0 +1,24 @@
+import call from './call.js';
+import { CacheInterceptor } from './interceptor.cache.js';
+
+/* istanbul ignore file */
+const get = async ({ cache, clientCredentials, headers, retries, timeout, token, tracking, url, responseType, }) => {
+    const cacheInterceptor = cache?.enabled ? new CacheInterceptor(cache) : null;
+    return await call({
+        cacheInterceptor,
+        clientCredentials,
+        headers,
+        method: 'get',
+        retries,
+        timeout,
+        token,
+        tracking,
+        url,
+        responseType,
+    })
+        .catch((err) => Promise.reject(err))
+        .then((result) => Promise.resolve(result));
+};
+
+export { get as default };
+//# sourceMappingURL=get.js.map

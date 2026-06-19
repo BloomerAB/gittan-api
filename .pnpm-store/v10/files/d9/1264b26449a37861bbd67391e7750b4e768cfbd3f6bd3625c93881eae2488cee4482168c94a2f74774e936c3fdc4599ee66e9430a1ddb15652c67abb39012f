@@ -1,0 +1,2 @@
+declare function decapitalizeKeys<T extends Record<string, any>>(obj: T): Record<string, any>;
+export { decapitalizeKeys };

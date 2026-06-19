@@ -1,0 +1,15 @@
+import type { Request, Response } from 'express';
+import type { SecurityHandler } from 'openapi-security-handler';
+import type { OpenAPIV3 } from 'openapi-types';
+type TController = (req: Request, res: Response) => void;
+type TOperations = Record<string, TController>;
+type TDefaultServerProps = {
+    apiDoc: OpenAPIV3.Document<Record<string, never>>;
+    operations?: TOperations;
+    pathPrefix: string;
+    paths?: string;
+    securityHandlers?: Record<string, SecurityHandler>;
+    corsString?: string;
+};
+export type { TOperations, TController };
+export default TDefaultServerProps;

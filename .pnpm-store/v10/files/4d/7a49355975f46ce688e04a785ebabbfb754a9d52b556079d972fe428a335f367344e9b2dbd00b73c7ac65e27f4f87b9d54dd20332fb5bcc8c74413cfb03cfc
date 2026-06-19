@@ -1,0 +1,23 @@
+import express from 'express';
+import type TDefaultServerProps from './server.types';
+/**
+ * Sets up an Express application with OpenAPI required configurations and routes.
+ *
+ * This function initializes an Express app, configures API documentation,
+ * sets up security schemes, and adds various routes including health check,
+ * API docs, and metrics endpoints. It also ensures that necessary environment
+ * variables are set and integrates error handling and security configurations.
+ *
+ * @async
+ * @function
+ * @param {Object} params - The configuration parameters for setting up the app.
+ * @param {Object} params.apiDoc - The OpenAPI specification document for the API.
+ * @param {string} params.operations   - The methods to be used for each operation ID.
+ * @param {string} params.pathPrefix - The prefix for the API paths.
+ *
+ * @returns {Promise<express.Application>} The configured Express app.
+ *
+ * @throws {Error} Will throw an error if the EPI_JWKS_URI and/or ORY_INTROSPECT_URI environment variable are not set.
+ */
+declare const setupApp: ({ apiDoc, operations, pathPrefix, paths, corsString, }: TDefaultServerProps) => Promise<express.Application>;
+export default setupApp;

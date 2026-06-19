@@ -1,0 +1,4 @@
+declare const _default: {
+    scopes: (requiredScopes: Array<string>, existingScopes: Array<string>) => boolean;
+};
+export default _default;

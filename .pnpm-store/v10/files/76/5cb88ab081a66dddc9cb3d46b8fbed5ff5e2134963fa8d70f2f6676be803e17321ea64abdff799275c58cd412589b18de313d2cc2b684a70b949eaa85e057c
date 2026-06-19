@@ -1,0 +1,63 @@
+import validate from './validation/index.js';
+
+const extractPermissions = (decodedToken) => {
+    const permissions = {};
+    // Extract all claims that start with 'perm:'
+    for (const [key, value] of Object.entries(decodedToken)) {
+        if (key.startsWith('perm:')) {
+            permissions[key] = value === 'true' || value === true;
+        }
+    }
+    return permissions;
+};
+const bearerTokenHandler = async (req, requiredScopes, _securityDefinition) => {
+    const token = validate.authorizationHeader(req.headers);
+    // Ugly solution for testing purposes in consuming packages
+    // Feel free to improve if you can see a better way of doing it
+    if (process.env.NODE_ENV === 'test' &&
+        process.env.PACKAGE_INTERNAL_TEST !== 'true') {
+        if (token) {
+            req.user = {
+                id: 'test-user',
+                customerNo: '123456789',
+                vivaldiUserId: '987654321',
+                onlyShowUserOrders: false,
+                permissions: {
+                    'perm:viewOrderHistory': true,
+                    'perm:viewInvoices': true,
+                },
+            };
+            return true;
+        }
+        else
+            throw new Error('TEST_ONLY: Missing or faulty Authorization header');
+    }
+    // Only accept tokens from Receipt Bundler auth-server (rb_at_ prefix)
+    if (!token.startsWith('rb_at_')) {
+        throw new Error('Invalid token format. Only Receipt Bundler tokens (rb_at_) are accepted.');
+    }
+    validate.environmentVariable('OAUTH2_INTROSPECTION_URL', 'cannot validate opaque Receipt Bundler tokens');
+    const decodedToken = await validate.opaqueToken(token, requiredScopes, process.env.OAUTH2_INTROSPECTION_URL);
+    // user token
+    if (decodedToken && decodedToken.userId) {
+        req.user = {
+            id: decodedToken.userId,
+            customerNo: decodedToken.customerId,
+            companyId: decodedToken.companyId || decodedToken.customerId,
+            email: decodedToken.email,
+            role: decodedToken.role,
+            vivaldiUserId: decodedToken.vivaldiUserId,
+            onlyShowUserOrders: decodedToken.onlyShowUserOrders === 'True',
+            permissions: extractPermissions(decodedToken),
+        };
+        return true;
+    }
+    // client credentials token
+    if (decodedToken) {
+        return true;
+    }
+    return false;
+};
+
+export { bearerTokenHandler as default };
+//# sourceMappingURL=bearer-token-handler.js.map

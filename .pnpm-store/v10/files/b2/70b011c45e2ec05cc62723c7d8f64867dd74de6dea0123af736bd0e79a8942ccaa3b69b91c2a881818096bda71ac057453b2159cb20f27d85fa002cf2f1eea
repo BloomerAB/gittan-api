@@ -1,0 +1,3 @@
+import jwksClient from 'jwks-rsa';
+declare const getJwksClientInstance: (jwksUri: string) => Promise<jwksClient.JwksClient>;
+export { getJwksClientInstance };

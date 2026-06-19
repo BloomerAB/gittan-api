@@ -1,0 +1,41 @@
+import { reportCounter, reportHistogram } from './reporter.js';
+
+/**
+ * Normalize path to avoid high cardinality metrics.
+ * Replaces UUIDs and numeric IDs with :id placeholder.
+ */
+const normalizePath = (path) => {
+    return path
+        // Replace UUIDs (e.g., 550e8400-e29b-41d4-a716-446655440000)
+        .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '/:id')
+        // Replace numeric IDs
+        .replace(/\/\d+/g, '/:id');
+};
+/**
+ * Express middleware that tracks HTTP request metrics.
+ *
+ * Metrics collected:
+ * - http_requests_total: Counter with labels (method, path, status)
+ * - http_request_duration_ms: Histogram with labels (method, path, status)
+ */
+const httpRequestMiddleware = () => {
+    return (req, res, next) => {
+        const startTime = Date.now();
+        res.on('finish', () => {
+            const duration = Date.now() - startTime;
+            const path = normalizePath(req.route?.path || req.path || 'unknown');
+            const method = req.method;
+            const status = res.statusCode.toString();
+            reportCounter('http_requests_total', 'Total number of HTTP requests', {
+                method,
+                path,
+                status,
+            });
+            reportHistogram('http_request_duration_ms', 'HTTP request duration in milliseconds', { method, path, status }, duration);
+        });
+        next();
+    };
+};
+
+export { httpRequestMiddleware, normalizePath };
+//# sourceMappingURL=httpMiddleware.js.map

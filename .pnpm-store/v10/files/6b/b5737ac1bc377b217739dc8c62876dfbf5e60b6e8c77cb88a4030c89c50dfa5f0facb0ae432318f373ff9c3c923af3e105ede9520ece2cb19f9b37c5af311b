@@ -1,0 +1,15 @@
+import { BaseError } from './BaseError.js';
+
+class ConnectionAborted extends BaseError {
+    constructor() {
+        super({
+            message: 'Retrying if request is setup for retries',
+            externalCode: 500,
+            internalCode: 502,
+        });
+        Error.captureStackTrace(this, ConnectionAborted);
+    }
+}
+
+export { ConnectionAborted as default };
+//# sourceMappingURL=ConnectionAborted.js.map

@@ -1,0 +1,183 @@
+const SuccessWithoutResponse = {
+    description: 'Successful request - no response is returned.',
+};
+const BadRequest = {
+    description: 'The calling party made a request that was malformatted.',
+    content: {
+        '*/*': {
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                        default: 'information is either missing, or invalid in the request.',
+                    },
+                },
+            },
+        },
+    },
+};
+const NotAuthenticated = {
+    description: 'The user or client could not be authenticated.',
+    content: {
+        '*/*': {
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                        default: `
+## User login
+The email and password (or client id and secret) combination is not correct - either email does not exist or the password is not valid for that email.
+
+## Client credentials
+The client and/or the client secret was invalid.
+              `,
+                    },
+                },
+            },
+        },
+    },
+};
+const Forbidden = {
+    description: 'The action is not allowed, check message for clues to why.',
+    content: {
+        '*/*': {
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                    },
+                },
+            },
+        },
+    },
+};
+const Conflict = {
+    description: 'A requested resource already exists.',
+    content: {
+        '*/*': {
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                        default: 'The account already exists',
+                    },
+                },
+            },
+        },
+    },
+};
+const NotFound = {
+    description: 'The requested resource was not found - has either been deleted or never existed.',
+    content: {
+        '*/*': {
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                        default: 'the account does not exist',
+                    },
+                },
+            },
+        },
+    },
+};
+const InternalServerError = {
+    description: 'Something went wrong on our server - contact support if this continuously happens.',
+    content: {
+        '*/*': {
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                        default: 'Something unexcepted or unhandled happened on the server.',
+                    },
+                },
+            },
+        },
+    },
+};
+const ActingAsProxyError = {
+    description: 'Something went wrong while the server acted as a gateway or a proxy to a upstream service.',
+    content: {
+        '*/*': {
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                        default: 'Un upstream service call failed',
+                    },
+                },
+            },
+        },
+    },
+};
+const Oauth2Error = {
+    description: 'Something went wrong during an oauth2 flow. https://tools.ietf.org/html/rfc6749 (error code: 400, 401, 403, 500, 502)',
+    content: {
+        '*/*': {
+            schema: {
+                type: 'object',
+                properties: {
+                    error: {
+                        type: 'string',
+                        enum: [
+                            'access_denied',
+                            'invalid_client',
+                            'invalid_grant',
+                            'invalid_request',
+                            'invalid_scope',
+                            'server_error',
+                            'temporarily_unavailable',
+                            'unauthorized_client',
+                            'unsupported_grant_type',
+                            'unsupported_response_type',
+                        ],
+                    },
+                    error_description: {
+                        type: 'string',
+                    },
+                },
+            },
+        },
+    },
+};
+const MethodNotAllowed = {
+    description: 'Method or path called does not exist.',
+    content: {
+        '*/*': {
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                        default: 'Method or path called does not exist.',
+                    },
+                },
+            },
+        },
+    },
+};
+// Export ErrorResponses object for OpenAPI components/responses
+// Using PascalCase to match $ref usage in spec files
+const ErrorResponses = {
+    NotAuthenticated,
+    Forbidden,
+    NotFound,
+    BadRequest,
+    InternalServerError,
+    Conflict,
+    MethodNotAllowed,
+    ActingAsProxyError,
+    Oauth2Error,
+    SuccessWithoutResponse,
+};
+
+export { ActingAsProxyError, BadRequest, Conflict, ErrorResponses, Forbidden, InternalServerError, MethodNotAllowed, NotAuthenticated, NotFound, Oauth2Error, SuccessWithoutResponse };
+//# sourceMappingURL=ErrorResponses.js.map

@@ -1,0 +1,35 @@
+# NPM API Essentials
+
+This package contains essentials functionality for node API:s.
+
+## Releases
+
+This package follows `semantic-release` versioning, based on commit messages. Release rules are configured in [.releaserc.json](/.releaserc.json), and follow the pattern:
+
+| Commit message                                   | Release type                  |
+| ------------------------------------------------ | ----------------------------- |
+| `fix: fix dependency issue`                      | Patch Release                 |
+| `feat: add 'width' option`                       | Minor Release                 |
+| `breaking: The 'width' option has been removed.` | Major/Breaking Release <br /> |
+
+Whenever a push is made to main containing one or more of the above commit patterns, a new release will be created automatically. If you _don't_ want to trigger a new release, prefix the commit message with something else, such as `ci: fix broken pipeline`, `docs: update docs` etc.
+
+## 📖 [Usage Guidelines](USAGE_GUIDELINES.md)
+
+**Important**: Read this first to avoid common mistakes when using this package. Includes critical rules about operationId handling, file naming conventions, and authentication patterns.
+
+## [Error](/src/error/README.md)
+
+## [Metrics](/src/metrics/README.md)
+
+## [Middleware](/src/middleware/README.md)
+
+## [Open-API](/src/open-api/README.md)
+
+## [Request](/src/request/README.md)
+
+## [Security](/src/security/README.md)
+
+## [Server](/src/server/README.md)
+
+## [Testing](/src/testing/README.md)

@@ -1,0 +1,3 @@
+import type { TGet } from './types';
+declare const get: ({ cache, clientCredentials, headers, retries, timeout, token, tracking, url, responseType, }: TGet) => Promise<any>;
+export default get;

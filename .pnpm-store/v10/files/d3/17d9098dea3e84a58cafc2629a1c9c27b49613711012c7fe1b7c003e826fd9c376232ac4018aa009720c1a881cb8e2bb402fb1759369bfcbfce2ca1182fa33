@@ -1,0 +1,20 @@
+import expiration from './expiration.js';
+import { getDecodedToken } from './keys/get-decoded-token.js';
+import 'jwks-rsa';
+import { getKid } from './keys/get-kid.js';
+import { getPublicKey } from './keys/get-public-key.js';
+import { getSigningKey } from './keys/get-signing-key.js';
+import validate from './scopes.js';
+
+const jwtToken = async (token, requiredScopes, jwksUri) => {
+    const kid = await getKid(token);
+    const signingKey = await getSigningKey(kid, jwksUri);
+    const publicKey = getPublicKey(signingKey);
+    const decodedToken = await getDecodedToken(token, publicKey);
+    validate.scopes(requiredScopes, decodedToken.scp || []);
+    expiration.istokenExpired(decodedToken.exp || 0);
+    return decodedToken;
+};
+
+export { jwtToken as default };
+//# sourceMappingURL=jwt-token.js.map

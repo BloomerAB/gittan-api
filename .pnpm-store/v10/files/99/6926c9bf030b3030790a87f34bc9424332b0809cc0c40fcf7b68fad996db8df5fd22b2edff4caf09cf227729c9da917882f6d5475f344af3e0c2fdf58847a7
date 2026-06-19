@@ -1,0 +1,16 @@
+import { BaseError } from './BaseError';
+import type { TAuthError, TOauth2Error } from './oauth2_error.types';
+type TOauth2ErrorProps = {
+    error: TOauth2Error | TAuthError;
+    error_description: string;
+    state?: string;
+    externalCode?: number;
+    internalCode?: number;
+};
+declare class Oauth2Error extends BaseError {
+    error: string;
+    error_description: string;
+    state?: string;
+    constructor({ externalCode, internalCode, error, error_description, state, }: TOauth2ErrorProps);
+}
+export default Oauth2Error;

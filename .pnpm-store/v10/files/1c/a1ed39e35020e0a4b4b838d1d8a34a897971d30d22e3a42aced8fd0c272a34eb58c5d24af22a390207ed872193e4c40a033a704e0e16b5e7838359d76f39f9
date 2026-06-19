@@ -1,0 +1,533 @@
+import { z } from "zod";
+export declare const MatchRuleSchema: z.ZodEffects<z.ZodObject<{
+    files: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    team: z.ZodOptional<z.ZodString>;
+    name: z.ZodOptional<z.ZodString>;
+    tags: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+}, "strip", z.ZodTypeAny, {
+    name?: string | undefined;
+    files?: string[] | undefined;
+    team?: string | undefined;
+    tags?: string[] | undefined;
+}, {
+    name?: string | undefined;
+    files?: string[] | undefined;
+    team?: string | undefined;
+    tags?: string[] | undefined;
+}>, {
+    name?: string | undefined;
+    files?: string[] | undefined;
+    team?: string | undefined;
+    tags?: string[] | undefined;
+}, {
+    name?: string | undefined;
+    files?: string[] | undefined;
+    team?: string | undefined;
+    tags?: string[] | undefined;
+}>;
+export type TMatchRule = z.infer<typeof MatchRuleSchema>;
+export declare const OrgPolicySchema: z.ZodObject<{
+    id: z.ZodString;
+    orgId: z.ZodString;
+    name: z.ZodString;
+    description: z.ZodOptional<z.ZodString>;
+    match: z.ZodEffects<z.ZodObject<{
+        files: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        team: z.ZodOptional<z.ZodString>;
+        name: z.ZodOptional<z.ZodString>;
+        tags: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    }, "strip", z.ZodTypeAny, {
+        name?: string | undefined;
+        files?: string[] | undefined;
+        team?: string | undefined;
+        tags?: string[] | undefined;
+    }, {
+        name?: string | undefined;
+        files?: string[] | undefined;
+        team?: string | undefined;
+        tags?: string[] | undefined;
+    }>, {
+        name?: string | undefined;
+        files?: string[] | undefined;
+        team?: string | undefined;
+        tags?: string[] | undefined;
+    }, {
+        name?: string | undefined;
+        files?: string[] | undefined;
+        team?: string | undefined;
+        tags?: string[] | undefined;
+    }>;
+    inject: z.ZodObject<{
+        before: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            name: z.ZodString;
+            image: z.ZodOptional<z.ZodString>;
+            use: z.ZodOptional<z.ZodString>;
+            with: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+            run: z.ZodOptional<z.ZodString>;
+            needs: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            only: z.ZodOptional<z.ZodString>;
+            cache: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            artifacts: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            secrets: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            services: z.ZodOptional<z.ZodArray<z.ZodUnion<[z.ZodString, z.ZodObject<{
+                image: z.ZodString;
+                env: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+            }, "strip", z.ZodTypeAny, {
+                image: string;
+                env?: Record<string, string> | undefined;
+            }, {
+                image: string;
+                env?: Record<string, string> | undefined;
+            }>]>, "many">>;
+            timeout: z.ZodDefault<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            name: string;
+            timeout: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+        }, {
+            name: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+            timeout?: string | undefined;
+        }>, "many">>;
+        after: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            name: z.ZodString;
+            image: z.ZodOptional<z.ZodString>;
+            use: z.ZodOptional<z.ZodString>;
+            with: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+            run: z.ZodOptional<z.ZodString>;
+            needs: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            only: z.ZodOptional<z.ZodString>;
+            cache: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            artifacts: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            secrets: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+            services: z.ZodOptional<z.ZodArray<z.ZodUnion<[z.ZodString, z.ZodObject<{
+                image: z.ZodString;
+                env: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+            }, "strip", z.ZodTypeAny, {
+                image: string;
+                env?: Record<string, string> | undefined;
+            }, {
+                image: string;
+                env?: Record<string, string> | undefined;
+            }>]>, "many">>;
+            timeout: z.ZodDefault<z.ZodString>;
+        }, "strip", z.ZodTypeAny, {
+            name: string;
+            timeout: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+        }, {
+            name: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+            timeout?: string | undefined;
+        }>, "many">>;
+    }, "strip", z.ZodTypeAny, {
+        before?: {
+            name: string;
+            timeout: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+        }[] | undefined;
+        after?: {
+            name: string;
+            timeout: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+        }[] | undefined;
+    }, {
+        before?: {
+            name: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+            timeout?: string | undefined;
+        }[] | undefined;
+        after?: {
+            name: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+            timeout?: string | undefined;
+        }[] | undefined;
+    }>;
+    enabled: z.ZodDefault<z.ZodBoolean>;
+    createdAt: z.ZodString;
+    updatedAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    orgId: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    match: {
+        name?: string | undefined;
+        files?: string[] | undefined;
+        team?: string | undefined;
+        tags?: string[] | undefined;
+    };
+    inject: {
+        before?: {
+            name: string;
+            timeout: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+        }[] | undefined;
+        after?: {
+            name: string;
+            timeout: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+        }[] | undefined;
+    };
+    enabled: boolean;
+    description?: string | undefined;
+}, {
+    id: string;
+    orgId: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    match: {
+        name?: string | undefined;
+        files?: string[] | undefined;
+        team?: string | undefined;
+        tags?: string[] | undefined;
+    };
+    inject: {
+        before?: {
+            name: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+            timeout?: string | undefined;
+        }[] | undefined;
+        after?: {
+            name: string;
+            with?: Record<string, string> | undefined;
+            image?: string | undefined;
+            use?: string | undefined;
+            run?: string | undefined;
+            needs?: string[] | undefined;
+            only?: string | undefined;
+            cache?: string[] | undefined;
+            artifacts?: string[] | undefined;
+            secrets?: string[] | undefined;
+            services?: (string | {
+                image: string;
+                env?: Record<string, string> | undefined;
+            })[] | undefined;
+            timeout?: string | undefined;
+        }[] | undefined;
+    };
+    description?: string | undefined;
+    enabled?: boolean | undefined;
+}>;
+export type TOrgPolicy = z.infer<typeof OrgPolicySchema>;
+export declare const TeamTemplateSchema: z.ZodObject<{
+    id: z.ZodString;
+    teamId: z.ZodString;
+    name: z.ZodString;
+    defaults: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+    steps: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        name: z.ZodString;
+        image: z.ZodOptional<z.ZodString>;
+        use: z.ZodOptional<z.ZodString>;
+        with: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+        run: z.ZodOptional<z.ZodString>;
+        needs: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        only: z.ZodOptional<z.ZodString>;
+        cache: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        artifacts: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        secrets: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        services: z.ZodOptional<z.ZodArray<z.ZodUnion<[z.ZodString, z.ZodObject<{
+            image: z.ZodString;
+            env: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+        }, "strip", z.ZodTypeAny, {
+            image: string;
+            env?: Record<string, string> | undefined;
+        }, {
+            image: string;
+            env?: Record<string, string> | undefined;
+        }>]>, "many">>;
+        timeout: z.ZodDefault<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        timeout: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+    }, {
+        name: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+        timeout?: string | undefined;
+    }>, "many">>;
+    notify: z.ZodOptional<z.ZodObject<{
+        onFailure: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            channel: z.ZodEnum<["team-slack", "author", "webhook"]>;
+            target: z.ZodOptional<z.ZodString>;
+            template: z.ZodDefault<z.ZodEnum<["compact", "detailed"]>>;
+        }, "strip", z.ZodTypeAny, {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }, {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }>, "many">>;
+        onReviewNeeded: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            channel: z.ZodEnum<["team-slack", "author", "webhook"]>;
+            target: z.ZodOptional<z.ZodString>;
+            template: z.ZodDefault<z.ZodEnum<["compact", "detailed"]>>;
+        }, "strip", z.ZodTypeAny, {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }, {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }>, "many">>;
+    }, "strip", z.ZodTypeAny, {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+    }, {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+    }>>;
+    createdAt: z.ZodString;
+    updatedAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    teamId: string;
+    id: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    steps?: {
+        name: string;
+        timeout: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+    }[] | undefined;
+    notify?: {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+    } | undefined;
+    defaults?: Record<string, string> | undefined;
+}, {
+    teamId: string;
+    id: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    steps?: {
+        name: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+        timeout?: string | undefined;
+    }[] | undefined;
+    notify?: {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+    } | undefined;
+    defaults?: Record<string, string> | undefined;
+}>;
+export type TTeamTemplate = z.infer<typeof TeamTemplateSchema>;
+//# sourceMappingURL=policy.d.ts.map

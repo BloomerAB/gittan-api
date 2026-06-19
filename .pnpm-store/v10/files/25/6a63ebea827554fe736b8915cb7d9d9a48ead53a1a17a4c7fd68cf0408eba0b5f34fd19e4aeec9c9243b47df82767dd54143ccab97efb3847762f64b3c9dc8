@@ -1,0 +1,6 @@
+import mock from './mock.js';
+
+
+
+export { mock as default };
+//# sourceMappingURL=index.js.map

@@ -1,0 +1,10 @@
+import { BaseError } from './BaseError.js';
+
+class ConfigError extends BaseError {
+    constructor(message) {
+        super({ message, internalCode: 502, externalCode: 500 });
+    }
+}
+
+export { ConfigError as default };
+//# sourceMappingURL=ConfigError.js.map

@@ -1,0 +1,21 @@
+const cacheResponseHandler = (req, res, next) => {
+    const originalSend = res.send;
+    // Override res.send to add cache headers before sending
+    // NOTE Do NOT use arrow functions here as arrow functions capture 'this' from definition scope,
+    // not call context when used as object methods
+    res.send = function (body) {
+        const clientCacheControl = req.headers['cache-control'];
+        if (clientCacheControl) {
+            res.set('Cache-Control', clientCacheControl);
+        }
+        // Add Vary header only when auth is involved
+        if (req.headers.authorization) {
+            res.set('Vary', 'Authorization');
+        }
+        return originalSend.call(this, body);
+    };
+    next();
+};
+
+export { cacheResponseHandler };
+//# sourceMappingURL=cacheResponseHandler.js.map

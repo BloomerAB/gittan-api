@@ -1,0 +1,52 @@
+import axios from 'axios';
+import ConfigError from '../error/classes/ConfigError.js';
+
+// Note that the cache bearer token does not take the scope into count ->
+// if the scope sent in differs between calls, the token may have the wrong scope.
+let lastFetch = Date.now();
+let bearerToken;
+let scopes;
+const CACHE_INTERVALL_MS = 30 * 60 * 1000; // 30 minutes
+const getMyClientCredentials = async (credentials) => {
+    if (!credentials.token_url ||
+        !credentials.client_id ||
+        !credentials.client_secret) {
+        throw new ConfigError('client_id, client_secret or token_uri is missing - request wrapper cannot setup the call without them');
+    }
+    if (bearerToken && scopes && credentials.scopes !== scopes)
+        // eslint-disable-next-line no-console
+        console.warn({
+            level: 'warn',
+            message: 'The cached token has a different scope than what was requested now - cached token scope differs, this may cause errors',
+        });
+    if (!bearerToken || lastFetch < Date.now() - CACHE_INTERVALL_MS) {
+        try {
+            const bearerRequest = await axios.post(`${credentials.token_url}`, new URLSearchParams({
+                grant_type: 'client_credentials',
+                scope: credentials.scopes,
+            }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                auth: {
+                    username: credentials.client_id,
+                    password: credentials.client_secret,
+                },
+            });
+            bearerToken = bearerRequest.data.access_token;
+            scopes = credentials.scopes;
+        }
+        catch (err) {
+            // eslint-disable-next-line no-console
+            console.error({
+                message: 'Failed to create bearer token credentials',
+                exception: err.response.data || err.message,
+            });
+        }
+        lastFetch = Date.now();
+    }
+    return bearerToken;
+};
+
+export { getMyClientCredentials as default };
+//# sourceMappingURL=client-credentials-handler.js.map

@@ -1,0 +1,2 @@
+declare const getSigningKey: (kid: string, jwksUri: string) => Promise<import("jwks-rsa").SigningKey>;
+export { getSigningKey };

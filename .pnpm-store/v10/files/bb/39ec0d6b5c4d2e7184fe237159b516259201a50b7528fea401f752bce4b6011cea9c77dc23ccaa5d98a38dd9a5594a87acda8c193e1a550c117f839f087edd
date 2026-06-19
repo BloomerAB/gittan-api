@@ -1,0 +1,4 @@
+import type { Request, Response } from 'express';
+import type { Context } from 'openapi-backend';
+declare const createValidationFailHandler: () => (context: Context, _req: Request, res: Response) => Response<any, Record<string, any>>;
+export default createValidationFailHandler;

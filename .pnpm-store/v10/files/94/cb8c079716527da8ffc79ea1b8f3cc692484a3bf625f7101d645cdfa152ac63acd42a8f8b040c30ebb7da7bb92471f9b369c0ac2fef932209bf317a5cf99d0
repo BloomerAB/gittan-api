@@ -1,0 +1,3 @@
+import type { SecurityHandler } from 'openapi-security-handler';
+declare const bearerTokenHandler: SecurityHandler;
+export default bearerTokenHandler;

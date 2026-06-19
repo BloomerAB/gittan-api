@@ -22,6 +22,14 @@ export const CREATE_TABLES = [
     user_id text
   )`,
 
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.users_by_org (
+    org_id text,
+    user_id text,
+    email text,
+    name text,
+    PRIMARY KEY (org_id, user_id)
+  )`,
+
   `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.orgs (
     id text PRIMARY KEY,
     name text,

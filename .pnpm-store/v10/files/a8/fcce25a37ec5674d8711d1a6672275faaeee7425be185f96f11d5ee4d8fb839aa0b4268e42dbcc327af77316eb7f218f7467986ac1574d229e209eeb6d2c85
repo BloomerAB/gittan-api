@@ -1,0 +1,8 @@
+import get from './get.js';
+import patch from './patch.js';
+import post from './post.js';
+
+var request = { get, post, patch };
+
+export { request as default };
+//# sourceMappingURL=index.js.map

@@ -1,0 +1,21 @@
+import call from './call.js';
+
+/* istanbul ignore file */
+const patch = async ({ body, clientCredentials, headers, retries, timeout, token, tracking, url, }) => {
+    return await call({
+        body,
+        clientCredentials,
+        headers,
+        method: 'patch',
+        retries,
+        timeout,
+        token,
+        tracking,
+        url,
+    })
+        .catch((err) => Promise.reject(err))
+        .then((result) => Promise.resolve(result));
+};
+
+export { patch as default };
+//# sourceMappingURL=patch.js.map

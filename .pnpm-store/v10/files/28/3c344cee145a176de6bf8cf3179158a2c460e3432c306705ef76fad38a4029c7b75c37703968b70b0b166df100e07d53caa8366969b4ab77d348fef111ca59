@@ -1,0 +1,38 @@
+import Oauth2Error from '../../../error/classes/Oauth2Error.js';
+import { OAUTH2_ERROR_TYPES } from '../../../error/classes/oauth2_error.types.js';
+import { getJwksClientInstance } from './get-jwks-client.js';
+
+const getSigningKey = async (kid, jwksUri) => {
+    try {
+        const client = await getJwksClientInstance(jwksUri);
+        return await client.getSigningKey(kid);
+    }
+    catch (err) {
+        if (err.message.includes('JWKS URI'))
+            throw new Oauth2Error({
+                internalCode: 401,
+                externalCode: 401,
+                error: OAUTH2_ERROR_TYPES.accessDenied,
+                error_description: `Failed to retrieve signing key from JWKS URI ${jwksUri} for Key ID: ${kid}. Error: ${err.message}`,
+            });
+        else if (err.message.includes('Signing key not found')) {
+            throw new Oauth2Error({
+                internalCode: 401,
+                externalCode: 401,
+                error: OAUTH2_ERROR_TYPES.accessDenied,
+                error_description: `Signing key not found in JWKS for Key ID: ${kid}: ${err.message}`,
+            });
+        }
+        else {
+            throw new Oauth2Error({
+                internalCode: 401,
+                externalCode: 401,
+                error: OAUTH2_ERROR_TYPES.accessDenied,
+                error_description: `Unexpected error retrieving signing key for Key ID: ${kid}. Error: ${err.message}`,
+            });
+        }
+    }
+};
+
+export { getSigningKey };
+//# sourceMappingURL=get-signing-key.js.map

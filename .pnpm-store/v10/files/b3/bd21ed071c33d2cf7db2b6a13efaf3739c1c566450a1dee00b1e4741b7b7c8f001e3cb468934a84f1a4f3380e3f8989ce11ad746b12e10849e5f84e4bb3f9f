@@ -1,0 +1,13 @@
+import { getCounter, getHistogram } from './setup.js';
+
+const reportCounter = (name, description, labels) => {
+    const counter = getCounter(name, description, Object.keys(labels));
+    counter.inc(labels);
+};
+const reportHistogram = (name, description, labels, value) => {
+    const histogram = getHistogram(name, description, Object.keys(labels));
+    histogram.labels(labels).observe(value);
+};
+
+export { reportCounter, reportHistogram };
+//# sourceMappingURL=reporter.js.map

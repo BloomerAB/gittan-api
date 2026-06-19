@@ -74,7 +74,13 @@ describe("repo routes", () => {
     teamRepo = createMockTeamRepo()
     initDeps({
       config: { port: 4000 } as any,
-      db: {} as any,
+      db: {
+        execute: vi.fn().mockResolvedValue({
+          rowLength: 1,
+          first: () => ({ org_id: "org-1" }),
+        }),
+        batch: vi.fn(),
+      } as any,
       nats: {} as any,
       teamRepo,
       repoMetadata,

@@ -1,0 +1,24 @@
+import type { OpenAPIV3 } from 'openapi-types';
+declare const SuccessWithoutResponse: OpenAPIV3.ResponseObject;
+declare const BadRequest: OpenAPIV3.ResponseObject;
+declare const NotAuthenticated: OpenAPIV3.ResponseObject;
+declare const Forbidden: OpenAPIV3.ResponseObject;
+declare const Conflict: OpenAPIV3.ResponseObject;
+declare const NotFound: OpenAPIV3.ResponseObject;
+declare const InternalServerError: OpenAPIV3.ResponseObject;
+declare const ActingAsProxyError: OpenAPIV3.ResponseObject;
+declare const Oauth2Error: OpenAPIV3.ResponseObject;
+declare const MethodNotAllowed: OpenAPIV3.ResponseObject;
+export { ActingAsProxyError, BadRequest, Conflict, Forbidden, InternalServerError, MethodNotAllowed, NotAuthenticated, NotFound, Oauth2Error, SuccessWithoutResponse, };
+export declare const ErrorResponses: {
+    NotAuthenticated: OpenAPIV3.ResponseObject;
+    Forbidden: OpenAPIV3.ResponseObject;
+    NotFound: OpenAPIV3.ResponseObject;
+    BadRequest: OpenAPIV3.ResponseObject;
+    InternalServerError: OpenAPIV3.ResponseObject;
+    Conflict: OpenAPIV3.ResponseObject;
+    MethodNotAllowed: OpenAPIV3.ResponseObject;
+    ActingAsProxyError: OpenAPIV3.ResponseObject;
+    Oauth2Error: OpenAPIV3.ResponseObject;
+    SuccessWithoutResponse: OpenAPIV3.ResponseObject;
+};

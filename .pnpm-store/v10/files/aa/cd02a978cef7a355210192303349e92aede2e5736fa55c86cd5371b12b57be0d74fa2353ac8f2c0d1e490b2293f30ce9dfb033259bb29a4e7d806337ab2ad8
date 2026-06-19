@@ -1,0 +1,19 @@
+import Oauth2Error from '../../../error/classes/Oauth2Error.js';
+import { OAUTH2_ERROR_TYPES } from '../../../error/classes/oauth2_error.types.js';
+
+const getPublicKey = (key) => {
+    try {
+        return key.getPublicKey();
+    }
+    catch (err) {
+        throw new Oauth2Error({
+            internalCode: 401,
+            externalCode: 401,
+            error: OAUTH2_ERROR_TYPES.accessDenied,
+            error_description: `Failed to extract public key from signing key. Error: ${err.message}`,
+        });
+    }
+};
+
+export { getPublicKey };
+//# sourceMappingURL=get-public-key.js.map

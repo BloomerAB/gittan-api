@@ -1,0 +1,2 @@
+declare const jwtToken: (token: string, requiredScopes: Array<string>, jwksUri: string) => Promise<any>;
+export default jwtToken;

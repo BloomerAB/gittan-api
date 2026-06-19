@@ -1,0 +1,218 @@
+import { z } from "zod";
+export declare const CommitSchema: z.ZodObject<{
+    sha: z.ZodString;
+    message: z.ZodString;
+    author: z.ZodString;
+    timestamp: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    message: string;
+    author: string;
+    sha: string;
+    timestamp: string;
+}, {
+    message: string;
+    author: string;
+    sha: string;
+    timestamp: string;
+}>;
+export type TCommit = z.infer<typeof CommitSchema>;
+export declare const PushEventSchema: z.ZodObject<{
+    id: z.ZodString;
+    orgId: z.ZodString;
+    teamId: z.ZodString;
+    repoId: z.ZodString;
+    repoName: z.ZodString;
+    branch: z.ZodString;
+    commits: z.ZodArray<z.ZodObject<{
+        sha: z.ZodString;
+        message: z.ZodString;
+        author: z.ZodString;
+        timestamp: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        message: string;
+        author: string;
+        sha: string;
+        timestamp: string;
+    }, {
+        message: string;
+        author: string;
+        sha: string;
+        timestamp: string;
+    }>, "many">;
+    pusher: z.ZodString;
+    timestamp: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    teamId: string;
+    id: string;
+    orgId: string;
+    timestamp: string;
+    repoId: string;
+    repoName: string;
+    branch: string;
+    commits: {
+        message: string;
+        author: string;
+        sha: string;
+        timestamp: string;
+    }[];
+    pusher: string;
+}, {
+    teamId: string;
+    id: string;
+    orgId: string;
+    timestamp: string;
+    repoId: string;
+    repoName: string;
+    branch: string;
+    commits: {
+        message: string;
+        author: string;
+        sha: string;
+        timestamp: string;
+    }[];
+    pusher: string;
+}>;
+export type TPushEvent = z.infer<typeof PushEventSchema>;
+export declare const StepResultStatus: z.ZodEnum<["pending", "running", "passed", "failed", "skipped", "waiting-review"]>;
+export type TStepResultStatus = z.infer<typeof StepResultStatus>;
+export declare const StepResultSchema: z.ZodObject<{
+    stepName: z.ZodString;
+    status: z.ZodEnum<["pending", "running", "passed", "failed", "skipped", "waiting-review"]>;
+    startedAt: z.ZodOptional<z.ZodString>;
+    finishedAt: z.ZodOptional<z.ZodString>;
+    durationMs: z.ZodOptional<z.ZodNumber>;
+    exitCode: z.ZodOptional<z.ZodNumber>;
+    logUrl: z.ZodOptional<z.ZodString>;
+    error: z.ZodOptional<z.ZodString>;
+    source: z.ZodEnum<["repo", "policy", "template"]>;
+}, "strip", z.ZodTypeAny, {
+    status: "pending" | "running" | "passed" | "failed" | "skipped" | "waiting-review";
+    stepName: string;
+    source: "template" | "repo" | "policy";
+    startedAt?: string | undefined;
+    finishedAt?: string | undefined;
+    durationMs?: number | undefined;
+    exitCode?: number | undefined;
+    logUrl?: string | undefined;
+    error?: string | undefined;
+}, {
+    status: "pending" | "running" | "passed" | "failed" | "skipped" | "waiting-review";
+    stepName: string;
+    source: "template" | "repo" | "policy";
+    startedAt?: string | undefined;
+    finishedAt?: string | undefined;
+    durationMs?: number | undefined;
+    exitCode?: number | undefined;
+    logUrl?: string | undefined;
+    error?: string | undefined;
+}>;
+export type TStepResult = z.infer<typeof StepResultSchema>;
+export declare const PipelineRunSchema: z.ZodObject<{
+    id: z.ZodString;
+    pushEventId: z.ZodString;
+    orgId: z.ZodString;
+    teamId: z.ZodString;
+    repoId: z.ZodString;
+    branch: z.ZodString;
+    status: z.ZodEnum<["pending", "running", "passed", "failed"]>;
+    steps: z.ZodArray<z.ZodObject<{
+        stepName: z.ZodString;
+        status: z.ZodEnum<["pending", "running", "passed", "failed", "skipped", "waiting-review"]>;
+        startedAt: z.ZodOptional<z.ZodString>;
+        finishedAt: z.ZodOptional<z.ZodString>;
+        durationMs: z.ZodOptional<z.ZodNumber>;
+        exitCode: z.ZodOptional<z.ZodNumber>;
+        logUrl: z.ZodOptional<z.ZodString>;
+        error: z.ZodOptional<z.ZodString>;
+        source: z.ZodEnum<["repo", "policy", "template"]>;
+    }, "strip", z.ZodTypeAny, {
+        status: "pending" | "running" | "passed" | "failed" | "skipped" | "waiting-review";
+        stepName: string;
+        source: "template" | "repo" | "policy";
+        startedAt?: string | undefined;
+        finishedAt?: string | undefined;
+        durationMs?: number | undefined;
+        exitCode?: number | undefined;
+        logUrl?: string | undefined;
+        error?: string | undefined;
+    }, {
+        status: "pending" | "running" | "passed" | "failed" | "skipped" | "waiting-review";
+        stepName: string;
+        source: "template" | "repo" | "policy";
+        startedAt?: string | undefined;
+        finishedAt?: string | undefined;
+        durationMs?: number | undefined;
+        exitCode?: number | undefined;
+        logUrl?: string | undefined;
+        error?: string | undefined;
+    }>, "many">;
+    startedAt: z.ZodString;
+    finishedAt: z.ZodOptional<z.ZodString>;
+    resolvedFrom: z.ZodObject<{
+        policies: z.ZodArray<z.ZodString, "many">;
+        template: z.ZodOptional<z.ZodString>;
+        repoConfig: z.ZodBoolean;
+    }, "strip", z.ZodTypeAny, {
+        policies: string[];
+        repoConfig: boolean;
+        template?: string | undefined;
+    }, {
+        policies: string[];
+        repoConfig: boolean;
+        template?: string | undefined;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    status: "pending" | "running" | "passed" | "failed";
+    teamId: string;
+    id: string;
+    orgId: string;
+    steps: {
+        status: "pending" | "running" | "passed" | "failed" | "skipped" | "waiting-review";
+        stepName: string;
+        source: "template" | "repo" | "policy";
+        startedAt?: string | undefined;
+        finishedAt?: string | undefined;
+        durationMs?: number | undefined;
+        exitCode?: number | undefined;
+        logUrl?: string | undefined;
+        error?: string | undefined;
+    }[];
+    repoId: string;
+    branch: string;
+    startedAt: string;
+    pushEventId: string;
+    resolvedFrom: {
+        policies: string[];
+        repoConfig: boolean;
+        template?: string | undefined;
+    };
+    finishedAt?: string | undefined;
+}, {
+    status: "pending" | "running" | "passed" | "failed";
+    teamId: string;
+    id: string;
+    orgId: string;
+    steps: {
+        status: "pending" | "running" | "passed" | "failed" | "skipped" | "waiting-review";
+        stepName: string;
+        source: "template" | "repo" | "policy";
+        startedAt?: string | undefined;
+        finishedAt?: string | undefined;
+        durationMs?: number | undefined;
+        exitCode?: number | undefined;
+        logUrl?: string | undefined;
+        error?: string | undefined;
+    }[];
+    repoId: string;
+    branch: string;
+    startedAt: string;
+    pushEventId: string;
+    resolvedFrom: {
+        policies: string[];
+        repoConfig: boolean;
+        template?: string | undefined;
+    };
+    finishedAt?: string | undefined;
+}>;
+export type TPipelineRun = z.infer<typeof PipelineRunSchema>;
+//# sourceMappingURL=events.d.ts.map

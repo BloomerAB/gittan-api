@@ -1,0 +1,22 @@
+import { vi } from 'vitest';
+
+/**
+ *
+ * @param obj The object or class prototype to mock
+ * @param method The method on the object/class to be mocked
+ * @param retVal What the mocked method should return
+ * @returns A Jest Spy Instance
+ * @remarks Class methods can not be mocked with arrow functions,
+ * instead use a regular function like so: `function() {}`
+ */
+const mock = (obj, method, retVal) => {
+    if (!retVal) {
+        retVal = () => ({
+            promise: () => [],
+        });
+    }
+    return vi.spyOn(obj, method).mockImplementation(retVal);
+};
+
+export { mock as default };
+//# sourceMappingURL=mock.js.map

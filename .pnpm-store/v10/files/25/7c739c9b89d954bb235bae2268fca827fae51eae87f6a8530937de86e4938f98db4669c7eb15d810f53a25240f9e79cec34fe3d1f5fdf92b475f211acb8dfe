@@ -1,0 +1,57 @@
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+const OAUTH2_ERROR_TYPES = {
+    // The user references in the token has been removed
+    userGone: 'user_gone',
+    // The request is missing a required parameter, includes an
+    // invalid parameter value, includes a parameter more than
+    // once, or is otherwise malformed
+    invalidRequest: 'invalid_request',
+    // The client is not authorized to request an authorization
+    // code using this method
+    unauthorizedClient: 'unauthorized_client',
+    // The resource owner or authorization server denied the
+    // request.
+    accessDenied: 'access_denied',
+    // The authorization server does not support obtaining an
+    // authorization code using this method.
+    unsupportedResponseType: 'unsupported_response_type',
+    // The provided authorization grant (e.g., authorization
+    // code, resource owner credentials) or refresh token is
+    // invalid, expired, revoked, does not match the redirection
+    // URI used in the authorization request, or was issued to
+    // another client
+    invalidGrant: 'invalid_grant',
+    // Client authentication failed (e.g., unknown client, no
+    // client authentication included, or unsupported
+    // authentication method).  The authorization server MAY
+    // return an HTTP 401 (Unauthorized) status code to indicate
+    // which HTTP authentication schemes are supported.  If the
+    // client attempted to authenticate via the "Authorization"
+    // request header field, the authorization server MUST
+    // respond with an HTTP 401 (Unauthorized) status code and
+    // include the "WWW-Authenticate" response header field
+    // matching the authentication scheme used by the client.
+    invalidClient: 'invalid_client',
+    // The requested scope is invalid, unknown, or malformed.
+    invalidScope: 'invalid_scope',
+    // The authorization server encountered an unexpected
+    // condition that prevented it from fulfilling the request.
+    // (This error code is needed because a 500 Internal Server
+    // Error HTTP status code cannot be returned to the client
+    // via an HTTP redirect.)
+    serverError: 'server_error',
+    // The authorization server is currently unable to handle
+    // the request due to a temporary overloading or maintenance
+    // of the server.  (This error code is needed because a 503
+    // Service Unavailable HTTP status code cannot be returned
+    // to the client via an HTTP redirect.)
+    temporarilyUnavailable: 'temporarily_unavailable',
+    // The authorization grant type is not supported by the
+    // authorization server.
+    unsupportedGrantType: 'unsupported_grant_type',
+    // The token is expired or revoked.
+    invalidToken: 'invalid_token',
+};
+
+export { OAUTH2_ERROR_TYPES };
+//# sourceMappingURL=oauth2_error.types.js.map

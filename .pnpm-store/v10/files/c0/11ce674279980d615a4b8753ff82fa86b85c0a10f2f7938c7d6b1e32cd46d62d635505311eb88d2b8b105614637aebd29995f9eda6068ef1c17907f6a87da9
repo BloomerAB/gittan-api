@@ -1,0 +1,17 @@
+import type { OpenAPIV3 } from 'openapi-types';
+type RouteInfo = {
+    operationId: string;
+    operation: OpenAPIV3.OperationObject;
+    handler: any;
+    path: string;
+    method: string;
+};
+declare const generateOperationId: (docFile: string) => string;
+declare const generateRoutePath: (docFile: string) => string;
+declare const findOperationDoc: (docModule: any) => OpenAPIV3.OperationObject | null;
+declare const discoverRoutes: (pathsDirectory?: string) => Promise<{
+    operations: Record<string, any>;
+    paths: OpenAPIV3.PathsObject<{}, {}>;
+    routes: RouteInfo[];
+}>;
+export { discoverRoutes, generateOperationId, generateRoutePath, findOperationDoc, };

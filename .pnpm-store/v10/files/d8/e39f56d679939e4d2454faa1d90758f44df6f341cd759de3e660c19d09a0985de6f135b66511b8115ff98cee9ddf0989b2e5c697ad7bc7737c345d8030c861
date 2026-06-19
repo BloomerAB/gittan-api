@@ -1,0 +1,40 @@
+import type { ResponseType } from 'axios';
+import type { CacheInterceptor } from './interceptor.cache';
+type TCache = {
+    enabled?: boolean;
+    ttl?: number;
+    key?: string;
+};
+type TGet = {
+    cache: TCache;
+} & TRequestBase;
+type TPost = {
+    body: any;
+} & TRequestBase;
+type TTracking = {
+    to: string;
+    from: string;
+};
+type TRequestBase = {
+    url: string;
+    headers?: Record<string, string>;
+    token?: string;
+    timeout?: number;
+    retries?: number;
+    tracking?: TTracking;
+    cacheInterceptor?: CacheInterceptor;
+    clientCredentials?: TClientCredentials;
+    addMyCredentials?: boolean;
+    responseType?: ResponseType;
+};
+type TRequest = {
+    method: string;
+    body?: any;
+} & TRequestBase;
+type TClientCredentials = {
+    client_id: string;
+    client_secret: string;
+    scopes: string;
+    token_url: string;
+};
+export type { TGet, TPost, TTracking, TRequest, TRequestBase, TClientCredentials, TCache, };

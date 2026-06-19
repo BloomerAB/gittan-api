@@ -1,0 +1,3 @@
+import type { TClientCredentials } from './types';
+declare const getMyClientCredentials: (credentials: TClientCredentials) => Promise<string>;
+export default getMyClientCredentials;

@@ -1,0 +1,8 @@
+import type { TGet, TPost } from './types';
+declare const _default: {
+    get: ({ cache, clientCredentials, headers, retries, timeout, token, tracking, url, responseType, }: TGet) => Promise<any>;
+    post: ({ body, clientCredentials, headers, retries, timeout, token, tracking, url, }: TPost) => Promise<any>;
+    patch: ({ body, clientCredentials, headers, retries, timeout, token, tracking, url, }: TPost) => Promise<any>;
+};
+export default _default;
+export type { TGet, TPost };

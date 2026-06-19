@@ -1,0 +1,28 @@
+import jwt from 'jsonwebtoken';
+import Oauth2Error from '../../../error/classes/Oauth2Error.js';
+import { OAUTH2_ERROR_TYPES } from '../../../error/classes/oauth2_error.types.js';
+
+const getKid = async (token) => {
+    const decoded = jwt.decode(token, { complete: true });
+    if (!decoded) {
+        throw new Oauth2Error({
+            internalCode: 401,
+            externalCode: 401,
+            error: OAUTH2_ERROR_TYPES.accessDenied,
+            error_description: 'Cannot decode token',
+        });
+    }
+    const kid = decoded?.header?.kid;
+    if (!kid) {
+        throw new Oauth2Error({
+            internalCode: 401,
+            externalCode: 401,
+            error: OAUTH2_ERROR_TYPES.accessDenied,
+            error_description: 'Missing "kid" in JWT header',
+        });
+    }
+    return kid;
+};
+
+export { getKid };
+//# sourceMappingURL=get-kid.js.map

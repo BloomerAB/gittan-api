@@ -1,0 +1,20 @@
+import jwt from 'jsonwebtoken';
+import Oauth2Error from '../../../error/classes/Oauth2Error.js';
+import { OAUTH2_ERROR_TYPES } from '../../../error/classes/oauth2_error.types.js';
+
+const getDecodedToken = (token, publicKey) => {
+    try {
+        return jwt.verify(token, publicKey);
+    }
+    catch (verifyErr) {
+        throw new Oauth2Error({
+            internalCode: 401,
+            externalCode: 401,
+            error: OAUTH2_ERROR_TYPES.accessDenied,
+            error_description: `Token verification failed: ${verifyErr.message}`,
+        });
+    }
+};
+
+export { getDecodedToken };
+//# sourceMappingURL=get-decoded-token.js.map

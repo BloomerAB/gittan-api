@@ -1,0 +1,60 @@
+import bearerTokenHandler from '../../security/bearer-token-handler.js';
+import securitySchemes, { SCHEMES } from '../../security/schemes.js';
+
+const createController = (controller) => async (context, req, res) => {
+    // For some reason, the path params aren't mapped correctly to the request
+    // object, therefore we need to do it manually here.
+    req.params = context.request.params;
+    const { api: { definition }, operation, } = context;
+    const securityRequirements = operation.security ?? definition.security ?? [];
+    if (securityRequirements.length === 0) {
+        await controller(req, res);
+    }
+    else {
+        let authorized = false;
+        for (const securityRequirement of securityRequirements) {
+            let requirementMet = false;
+            for (const [name, scopes] of Object.entries(securityRequirement)) {
+                let isSchemeAuthorized = false;
+                switch (name) {
+                    case SCHEMES.BEARER_TOKEN:
+                        isSchemeAuthorized = await bearerTokenHandler(req, scopes, securitySchemes.bearerToken);
+                        break;
+                    default:
+                        throw new Error(`Unknown security scheme: ${name}`);
+                }
+                if (isSchemeAuthorized) {
+                    requirementMet = true;
+                    break;
+                }
+            }
+            if (!requirementMet) {
+                authorized = false;
+                break;
+            }
+            authorized = true;
+        }
+        if (authorized) {
+            await controller(req, res);
+        }
+    }
+};
+/**
+ * Creates a handler for each operation, and registers relevant security handlers.
+ * Security handlers are added to the operation's `security` array, and are a list of schemes (objects containing different requirements).
+ * If a scheme contains more than one requirement, the scheme is considered fulfilled/authorized
+ * if _any_ of the requirement is met, i.e. an OR operation.
+ * If the security array consists of more than one scheme, the operation is considered fulfilled/authorized
+ * if _all_ schemes are met, i.e. an AND operation.
+ * */
+const createOperationHandlers = (operations) => {
+    const handlers = new Array();
+    for (const [operationId, controller] of Object.entries(operations)) {
+        const operationHandler = createController(controller);
+        handlers.push({ [operationId]: operationHandler });
+    }
+    return handlers;
+};
+
+export { createOperationHandlers as default };
+//# sourceMappingURL=create-operation-handlers.js.map

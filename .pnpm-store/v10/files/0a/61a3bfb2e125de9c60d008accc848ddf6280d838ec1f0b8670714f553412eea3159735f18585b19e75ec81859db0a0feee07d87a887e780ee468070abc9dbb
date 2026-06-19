@@ -1,0 +1,15 @@
+import { BaseError } from './BaseError.js';
+
+class ResourceNotFound extends BaseError {
+    constructor(message, externalCode) {
+        super({
+            externalCode: externalCode || 422,
+            internalCode: 422,
+            message: message || 'A resource requested was not found in the database',
+        });
+        Error.captureStackTrace(this, ResourceNotFound);
+    }
+}
+
+export { ResourceNotFound as default };
+//# sourceMappingURL=ResourceNotFound.js.map

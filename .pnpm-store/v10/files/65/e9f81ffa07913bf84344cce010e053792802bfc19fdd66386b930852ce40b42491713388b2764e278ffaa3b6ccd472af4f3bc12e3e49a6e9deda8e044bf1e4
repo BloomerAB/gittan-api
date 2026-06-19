@@ -1,0 +1,14 @@
+type TBaseErrorProps = {
+    message: string;
+    externalCode?: number;
+    internalCode?: number;
+    trackingNumber?: string;
+};
+declare abstract class BaseError extends Error {
+    externalCode: number;
+    internalCode: number;
+    message: string;
+    trackingNumber: string;
+    constructor({ message, internalCode, externalCode }: TBaseErrorProps);
+}
+export { BaseError, type TBaseErrorProps };

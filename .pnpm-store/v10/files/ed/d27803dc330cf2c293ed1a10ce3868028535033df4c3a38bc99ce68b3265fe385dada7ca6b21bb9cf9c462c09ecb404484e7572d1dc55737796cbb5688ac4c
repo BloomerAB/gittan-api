@@ -1,0 +1,24 @@
+import { BaseError } from './BaseError.js';
+
+class Forbidden extends BaseError {
+    constructor(internalCode) {
+        let message = 'Forbidden';
+        if (internalCode === 10)
+            message = 'Forbidden - the resource has been locked out';
+        if (internalCode === 20)
+            message = 'Forbidden - not verified ';
+        if (internalCode === 21)
+            message = 'Forbidden - the email has not been verified ';
+        if (internalCode === 22)
+            message = 'Forbidden - the mobile has not been verified ';
+        if (internalCode === 68)
+            message = 'Forbidden - entry already exists ';
+        if (internalCode === 70)
+            message = 'Forbidden - reuesting party is not the owner ';
+        super({ externalCode: 403, message, internalCode });
+        Error.captureStackTrace(this, Forbidden);
+    }
+}
+
+export { Forbidden as default };
+//# sourceMappingURL=Forbidden.js.map

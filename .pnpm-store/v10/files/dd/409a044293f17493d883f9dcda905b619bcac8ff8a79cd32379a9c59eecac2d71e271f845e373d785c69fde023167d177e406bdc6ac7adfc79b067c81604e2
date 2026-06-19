@@ -1,0 +1,15 @@
+import { BaseError } from './BaseError.js';
+
+class BadRequest extends BaseError {
+    constructor(message, externalCode) {
+        super({
+            message: message || 'Request (or parts of it) could not be processed',
+            externalCode: externalCode || 400,
+            internalCode: 400,
+        });
+        Error.captureStackTrace(this, BadRequest);
+    }
+}
+
+export { BadRequest as default };
+//# sourceMappingURL=BadRequest.js.map

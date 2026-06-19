@@ -1,0 +1,4 @@
+import type { NextFunction, Request, Response } from 'express';
+import { BaseError } from '../error/classes/BaseError';
+declare const errorHandler: (err: BaseError | Error | unknown, req: Request, res: Response, _next?: NextFunction) => void;
+export default errorHandler;

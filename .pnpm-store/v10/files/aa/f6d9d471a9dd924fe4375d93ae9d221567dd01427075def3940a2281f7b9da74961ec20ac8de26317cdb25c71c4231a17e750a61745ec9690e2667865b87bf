@@ -1,0 +1,29 @@
+import { Registry, collectDefaultMetrics, Counter, Histogram } from 'prom-client';
+
+const registry = new Registry();
+collectDefaultMetrics({ register: registry });
+const getCounter = (name, help, labelNames) => {
+    let customCounter = registry.getSingleMetric(name);
+    if (!customCounter)
+        customCounter = new Counter({
+            name,
+            help,
+            labelNames,
+            registers: [registry],
+        });
+    return customCounter;
+};
+const getHistogram = (name, help, labelNames) => {
+    let customHistogram = registry.getSingleMetric(name);
+    if (!customHistogram)
+        customHistogram = new Histogram({
+            name,
+            help,
+            labelNames,
+            registers: [registry],
+        });
+    return customHistogram;
+};
+
+export { getCounter, getHistogram, registry };
+//# sourceMappingURL=setup.js.map

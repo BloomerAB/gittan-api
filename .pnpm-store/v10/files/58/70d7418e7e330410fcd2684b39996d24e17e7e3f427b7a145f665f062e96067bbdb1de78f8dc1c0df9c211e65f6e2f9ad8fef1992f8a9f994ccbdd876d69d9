@@ -1,0 +1,5 @@
+import { BaseError } from './BaseError';
+declare class BadRequest extends BaseError {
+    constructor(message: string, externalCode?: number);
+}
+export default BadRequest;

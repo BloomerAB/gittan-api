@@ -1,0 +1,2 @@
+declare const getDecodedToken: (token: string, publicKey: any) => any;
+export { getDecodedToken };

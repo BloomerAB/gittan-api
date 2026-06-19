@@ -1,0 +1,15 @@
+import { BaseError } from './BaseError.js';
+
+class InternalServerError extends BaseError {
+    constructor({ externalCode, internalCode, message }) {
+        super({
+            externalCode,
+            internalCode,
+            message: message || 'Unhandled exception',
+        });
+        Error.captureStackTrace(this, InternalServerError);
+    }
+}
+
+export { InternalServerError as default };
+//# sourceMappingURL=InternalServerError.js.map

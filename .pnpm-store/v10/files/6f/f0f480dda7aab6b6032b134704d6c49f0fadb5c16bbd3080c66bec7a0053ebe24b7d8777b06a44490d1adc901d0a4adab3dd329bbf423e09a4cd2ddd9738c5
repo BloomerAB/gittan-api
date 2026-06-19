@@ -1,0 +1,5 @@
+import { Counter, Histogram, Registry } from 'prom-client';
+declare const registry: Registry<"text/plain; version=0.0.4; charset=utf-8">;
+declare const getCounter: (name: string, help: string, labelNames: string[]) => Counter<string>;
+declare const getHistogram: (name: string, help: string, labelNames: string[]) => Histogram<string>;
+export { getCounter, getHistogram, registry };

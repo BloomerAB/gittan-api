@@ -1,0 +1,122 @@
+import { z } from "zod";
+export declare const PlanTypeSchema: z.ZodEnum<["starter", "team"]>;
+export type TPlanType = z.infer<typeof PlanTypeSchema>;
+export declare const OrgPlanSchema: z.ZodObject<{
+    orgId: z.ZodString;
+    plan: z.ZodEnum<["starter", "team"]>;
+    ciMinutesLimit: z.ZodNumber;
+    ciBlocks: z.ZodDefault<z.ZodNumber>;
+    storageLimitGb: z.ZodNumber;
+    userLimit: z.ZodNumber;
+    teamLimit: z.ZodNumber;
+    repoLimit: z.ZodNumber;
+    createdAt: z.ZodString;
+    updatedAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    orgId: string;
+    createdAt: string;
+    updatedAt: string;
+    plan: "team" | "starter";
+    ciMinutesLimit: number;
+    ciBlocks: number;
+    storageLimitGb: number;
+    userLimit: number;
+    teamLimit: number;
+    repoLimit: number;
+}, {
+    orgId: string;
+    createdAt: string;
+    updatedAt: string;
+    plan: "team" | "starter";
+    ciMinutesLimit: number;
+    storageLimitGb: number;
+    userLimit: number;
+    teamLimit: number;
+    repoLimit: number;
+    ciBlocks?: number | undefined;
+}>;
+export type TOrgPlan = z.infer<typeof OrgPlanSchema>;
+export declare const PLAN_LIMITS: {
+    readonly starter: {
+        readonly ciMinutesLimit: 2000;
+        readonly storageLimitGb: 20;
+        readonly userLimit: 2;
+        readonly teamLimit: 2;
+        readonly repoLimit: 10;
+    };
+    readonly team: {
+        readonly ciMinutesLimit: 10000;
+        readonly storageLimitGb: 100;
+        readonly userLimit: 0;
+        readonly teamLimit: 0;
+        readonly repoLimit: 0;
+    };
+};
+export declare const UsageEventSchema: z.ZodObject<{
+    orgId: z.ZodString;
+    month: z.ZodString;
+    eventId: z.ZodString;
+    type: z.ZodEnum<["pipeline_run"]>;
+    pipelineRunId: z.ZodString;
+    teamId: z.ZodString;
+    repoId: z.ZodString;
+    durationMs: z.ZodNumber;
+    ciMinutes: z.ZodNumber;
+    createdAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    type: "pipeline_run";
+    teamId: string;
+    orgId: string;
+    createdAt: string;
+    repoId: string;
+    durationMs: number;
+    month: string;
+    eventId: string;
+    pipelineRunId: string;
+    ciMinutes: number;
+}, {
+    type: "pipeline_run";
+    teamId: string;
+    orgId: string;
+    createdAt: string;
+    repoId: string;
+    durationMs: number;
+    month: string;
+    eventId: string;
+    pipelineRunId: string;
+    ciMinutes: number;
+}>;
+export type TUsageEvent = z.infer<typeof UsageEventSchema>;
+export declare const OrgUsageSchema: z.ZodObject<{
+    orgId: z.ZodString;
+    month: z.ZodString;
+    ciMinutesUsed: z.ZodNumber;
+    ciMinutesLimit: z.ZodNumber;
+    storageBytes: z.ZodNumber;
+    userCount: z.ZodNumber;
+    teamCount: z.ZodNumber;
+    repoCount: z.ZodNumber;
+    updatedAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    orgId: string;
+    updatedAt: string;
+    ciMinutesLimit: number;
+    month: string;
+    ciMinutesUsed: number;
+    storageBytes: number;
+    userCount: number;
+    teamCount: number;
+    repoCount: number;
+}, {
+    orgId: string;
+    updatedAt: string;
+    ciMinutesLimit: number;
+    month: string;
+    ciMinutesUsed: number;
+    storageBytes: number;
+    userCount: number;
+    teamCount: number;
+    repoCount: number;
+}>;
+export type TOrgUsage = z.infer<typeof OrgUsageSchema>;
+//# sourceMappingURL=usage.d.ts.map

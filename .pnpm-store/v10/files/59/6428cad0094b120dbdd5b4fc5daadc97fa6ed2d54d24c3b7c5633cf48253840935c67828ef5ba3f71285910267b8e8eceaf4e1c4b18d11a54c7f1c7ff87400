@@ -1,0 +1,18 @@
+import Oauth2Error from '../../error/classes/Oauth2Error.js';
+import { OAUTH2_ERROR_TYPES } from '../../error/classes/oauth2_error.types.js';
+
+const istokenExpired = (expiryTime) => {
+    if (Date.now() / 1000 > expiryTime) {
+        throw new Oauth2Error({
+            internalCode: 403,
+            externalCode: 403,
+            error: OAUTH2_ERROR_TYPES.invalidToken,
+            error_description: 'the access token expired',
+        });
+    }
+    return true;
+};
+var expiration = { istokenExpired };
+
+export { expiration as default };
+//# sourceMappingURL=expiration.js.map

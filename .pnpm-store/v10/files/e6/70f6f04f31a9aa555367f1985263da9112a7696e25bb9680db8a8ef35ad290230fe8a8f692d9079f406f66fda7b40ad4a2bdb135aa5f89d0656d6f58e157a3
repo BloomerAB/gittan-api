@@ -1,0 +1,16 @@
+import { BaseError } from './BaseError.js';
+
+class PageNotFound extends BaseError {
+    constructor(message, externalCode) {
+        super({
+            externalCode: externalCode || 404,
+            internalCode: 404,
+            message: message ||
+                'The requested resource could not be found at the specified address',
+        });
+        Error.captureStackTrace(this, PageNotFound);
+    }
+}
+
+export { PageNotFound as default };
+//# sourceMappingURL=PageNotFound.js.map

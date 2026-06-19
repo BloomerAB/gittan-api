@@ -1,0 +1,9 @@
+import * as keys from './keys';
+declare const _default: {
+    authorizationHeader: (headers: Record<string, string | unknown>) => string;
+    environmentVariable: (variableName: string, errorDescription: string) => void;
+    jwtToken: (token: string, requiredScopes: Array<string>, jwksUri: string) => Promise<any>;
+    keys: typeof keys;
+    opaqueToken: (token: any, requiredScopes: Array<string>, introspectionURL: string) => Promise<any>;
+};
+export default _default;

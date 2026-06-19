@@ -1,0 +1,115 @@
+import axios from 'axios';
+import BadRequest from '../error/classes/BadRequest.js';
+import ConnectionAborted from '../error/classes/ConnectionAborted.js';
+import InternalServerError from '../error/classes/InternalServerError.js';
+import { reportExternalCall } from '../metrics/custom-reporter.js';
+import getMyClientCredentials from './client-credentials-handler.js';
+import { onRequestDebug, onRequestErrorDebug, onResponseDebug, onResponseErrorDebug, onErrorFormatException } from './interceptors.js';
+
+const call = async ({ clientCredentials, body, headers = {}, method, retries = 0, timeout = 5000, token, tracking, cacheInterceptor = null, url, responseType = 'json', }) => {
+    const transformedData = transformBody(headers, body);
+    let config = {
+        data: transformedData,
+        headers,
+        method,
+        timeout,
+        url,
+        responseType,
+        // Disable axios's default transformRequest when we've already transformed the data
+        // This prevents axios from re-serializing our URL-encoded string as JSON
+        transformRequest: typeof transformedData === 'string' ? [(data) => data] : undefined,
+    };
+    // Authorization header
+    if (token && !headers?.Authorization) {
+        config.headers = {
+            ...config.headers,
+            ['Authorization']: token.includes('Bearer') ? token : `Bearer ${token}`,
+        };
+    }
+    else if (clientCredentials) {
+        const clientCredentialsToken = await getMyClientCredentials(clientCredentials);
+        config.headers = {
+            ...config.headers,
+            ['Authorization']: clientCredentialsToken?.includes('Bearer')
+                ? clientCredentialsToken
+                : `Bearer ${clientCredentialsToken}`,
+        };
+    }
+    const axiosInstance = cacheInterceptor
+        ? cacheInterceptor.setupAxiosCache(axios.create(config))
+        : axios.create(config);
+    /* istanbul ignore next */
+    if (process.env.AXIOS_DEBUG) {
+        /* istanbul ignore next */
+        axiosInstance.interceptors.request.use(onRequestDebug, onRequestErrorDebug);
+        /* istanbul ignore next */
+        axiosInstance.interceptors.response.use(onResponseDebug, onResponseErrorDebug);
+    }
+    axiosInstance.interceptors.response.use((response) => response, onErrorFormatException);
+    if ((tracking && tracking.to && !tracking.from) ||
+        (tracking && !tracking.to && tracking.from)) {
+        /* istanbul ignore next */
+        // eslint-disable-next-line no-console
+        console.warn('Implementation problem with tracking of external calls. Tracking element needs to contain both to and from to be enabled.');
+    }
+    let startTime;
+    if (tracking && tracking.to && tracking.from) {
+        startTime = process.hrtime();
+    }
+    const result = await doCallWithRetries(axiosInstance, config, retries);
+    // Especially useful for configuration misstakes by the developers using http instead of https
+    if (result.request.responseURL && url !== result.request.responseURL)
+        // eslint-disable-next-line no-console
+        console.warn({
+            message: `A redirect was detected from ${url} to ${result.request.responseURL}`,
+        });
+    if (tracking && tracking.to && tracking.from) {
+        const elapsedHrTime = process.hrtime(startTime);
+        const elapsedTimeInMs = elapsedHrTime[0] * 1000 + elapsedHrTime[1] / 1e6;
+        reportExternalCall({
+            to: tracking.to,
+            from: tracking.from,
+            code: result.status,
+            elapsedMs: elapsedTimeInMs,
+        });
+    }
+    return result;
+};
+const doCallWithRetries = async (axiosInstance, config, retries) => {
+    try {
+        return await axiosInstance.request(config);
+    }
+    catch (error) {
+        // ConnectionAborted means the call it was terminated - possibly because a timeout - retry if retries was requested
+        if (error instanceof ConnectionAborted && retries === 0) {
+            throw new InternalServerError({
+                message: 'Connection was aborted because an underlying request failed',
+            });
+        }
+        else if (error instanceof ConnectionAborted && retries > 0) {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            return await doCallWithRetries(axiosInstance, config, retries - 1);
+        }
+        /* istanbul ignore next */
+        throw error;
+    }
+};
+// Allow requester to use json body when making `application/x-www-form-urlencoded` requests
+const transformBody = (headers, body = {}) => {
+    if (body &&
+        headers &&
+        headers['content-type'] === 'application/x-www-form-urlencoded') {
+        if (!Object.values(body).every((value) => ['string', 'number', 'boolean'].includes(typeof value)))
+            throw new BadRequest('x-www-form-urlencoded request kan only have key value pairs in the body - this is something else');
+        if (!(body instanceof URLSearchParams) && typeof body === 'object') {
+            const encoded = Object.entries(body)
+                .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+                .join('&');
+            return encoded;
+        }
+    }
+    return body;
+};
+
+export { call as default };
+//# sourceMappingURL=call.js.map

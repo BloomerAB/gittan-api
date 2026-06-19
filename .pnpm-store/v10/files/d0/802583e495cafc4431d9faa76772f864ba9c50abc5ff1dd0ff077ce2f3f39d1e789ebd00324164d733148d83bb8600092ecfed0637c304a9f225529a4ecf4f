@@ -1,0 +1,3 @@
+import type { NextFunction, Request, Response } from 'express';
+declare const cacheResponseHandler: (req: Request, res: Response, next: NextFunction) => void;
+export { cacheResponseHandler };

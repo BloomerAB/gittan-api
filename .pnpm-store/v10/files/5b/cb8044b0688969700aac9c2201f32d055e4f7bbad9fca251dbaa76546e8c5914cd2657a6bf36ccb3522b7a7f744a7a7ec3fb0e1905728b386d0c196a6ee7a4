@@ -1,0 +1,2 @@
+declare const getKid: (token: string) => Promise<string>;
+export { getKid };

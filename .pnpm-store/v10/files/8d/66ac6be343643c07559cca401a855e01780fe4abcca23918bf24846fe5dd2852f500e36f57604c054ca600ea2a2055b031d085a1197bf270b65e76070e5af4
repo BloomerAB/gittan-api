@@ -1,0 +1,339 @@
+import { z } from "zod";
+export declare const GatedConfigSchema: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
+export declare const DependencySchema: z.ZodObject<{
+    repo: z.ZodString;
+    team: z.ZodOptional<z.ZodString>;
+    cascade: z.ZodDefault<z.ZodBoolean>;
+    contractTest: z.ZodDefault<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    repo: string;
+    cascade: boolean;
+    contractTest: boolean;
+    team?: string | undefined;
+}, {
+    repo: string;
+    team?: string | undefined;
+    cascade?: boolean | undefined;
+    contractTest?: boolean | undefined;
+}>;
+export type TDependency = z.infer<typeof DependencySchema>;
+export declare const GittanYamlSchema: z.ZodObject<{
+    steps: z.ZodDefault<z.ZodArray<z.ZodUnion<[z.ZodObject<{
+        name: z.ZodString;
+        image: z.ZodOptional<z.ZodString>;
+        use: z.ZodOptional<z.ZodString>;
+        with: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+        run: z.ZodOptional<z.ZodString>;
+        needs: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        only: z.ZodOptional<z.ZodString>;
+        cache: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        artifacts: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        secrets: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        timeout: z.ZodDefault<z.ZodString>;
+        services: z.ZodOptional<z.ZodArray<z.ZodUnion<[z.ZodString, z.ZodObject<{
+            image: z.ZodString;
+            env: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+        }, "strip", z.ZodTypeAny, {
+            image: string;
+            env?: Record<string, string> | undefined;
+        }, {
+            image: string;
+            env?: Record<string, string> | undefined;
+        }>]>, "many">>;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        timeout: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+    }, {
+        name: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+        timeout?: string | undefined;
+    }>, z.ZodObject<{
+        name: z.ZodLiteral<"review">;
+        require: z.ZodDefault<z.ZodNumber>;
+        from: z.ZodDefault<z.ZodEnum<["writers", "admins"]>>;
+        autoAssign: z.ZodDefault<z.ZodEnum<["blame", "round-robin", "none"]>>;
+        needs: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        skipFor: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    }, "strip", z.ZodTypeAny, {
+        name: "review";
+        require: number;
+        from: "writers" | "admins";
+        autoAssign: "blame" | "round-robin" | "none";
+        needs?: string[] | undefined;
+        skipFor?: string[] | undefined;
+    }, {
+        name: "review";
+        needs?: string[] | undefined;
+        require?: number | undefined;
+        from?: "writers" | "admins" | undefined;
+        autoAssign?: "blame" | "round-robin" | "none" | undefined;
+        skipFor?: string[] | undefined;
+    }>]>, "many">>;
+    gated: z.ZodOptional<z.ZodDefault<z.ZodArray<z.ZodString, "many">>>;
+    depends: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        repo: z.ZodString;
+        team: z.ZodOptional<z.ZodString>;
+        cascade: z.ZodDefault<z.ZodBoolean>;
+        contractTest: z.ZodDefault<z.ZodBoolean>;
+    }, "strip", z.ZodTypeAny, {
+        repo: string;
+        cascade: boolean;
+        contractTest: boolean;
+        team?: string | undefined;
+    }, {
+        repo: string;
+        team?: string | undefined;
+        cascade?: boolean | undefined;
+        contractTest?: boolean | undefined;
+    }>, "many">>;
+    notify: z.ZodOptional<z.ZodObject<{
+        onFailure: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            channel: z.ZodEnum<["team-slack", "author", "webhook"]>;
+            target: z.ZodOptional<z.ZodString>;
+            template: z.ZodDefault<z.ZodEnum<["compact", "detailed"]>>;
+        }, "strip", z.ZodTypeAny, {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }, {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }>, "many">>;
+        onReviewNeeded: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            channel: z.ZodEnum<["team-slack", "author", "webhook"]>;
+            target: z.ZodOptional<z.ZodString>;
+            template: z.ZodDefault<z.ZodEnum<["compact", "detailed"]>>;
+        }, "strip", z.ZodTypeAny, {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }, {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }>, "many">>;
+    }, "strip", z.ZodTypeAny, {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+    }, {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+    }>>;
+    links: z.ZodOptional<z.ZodObject<{
+        docs: z.ZodOptional<z.ZodString>;
+        grafana: z.ZodOptional<z.ZodString>;
+        status: z.ZodOptional<z.ZodString>;
+        homepage: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        status?: string | undefined;
+        docs?: string | undefined;
+        grafana?: string | undefined;
+        homepage?: string | undefined;
+    }, {
+        status?: string | undefined;
+        docs?: string | undefined;
+        grafana?: string | undefined;
+        homepage?: string | undefined;
+    }>>;
+}, "strip", z.ZodTypeAny, {
+    steps: ({
+        name: string;
+        timeout: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+    } | {
+        name: "review";
+        require: number;
+        from: "writers" | "admins";
+        autoAssign: "blame" | "round-robin" | "none";
+        needs?: string[] | undefined;
+        skipFor?: string[] | undefined;
+    })[];
+    notify?: {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            template: "compact" | "detailed";
+            target?: string | undefined;
+        }[] | undefined;
+    } | undefined;
+    gated?: string[] | undefined;
+    depends?: {
+        repo: string;
+        cascade: boolean;
+        contractTest: boolean;
+        team?: string | undefined;
+    }[] | undefined;
+    links?: {
+        status?: string | undefined;
+        docs?: string | undefined;
+        grafana?: string | undefined;
+        homepage?: string | undefined;
+    } | undefined;
+}, {
+    steps?: ({
+        name: string;
+        with?: Record<string, string> | undefined;
+        image?: string | undefined;
+        use?: string | undefined;
+        run?: string | undefined;
+        needs?: string[] | undefined;
+        only?: string | undefined;
+        cache?: string[] | undefined;
+        artifacts?: string[] | undefined;
+        secrets?: string[] | undefined;
+        services?: (string | {
+            image: string;
+            env?: Record<string, string> | undefined;
+        })[] | undefined;
+        timeout?: string | undefined;
+    } | {
+        name: "review";
+        needs?: string[] | undefined;
+        require?: number | undefined;
+        from?: "writers" | "admins" | undefined;
+        autoAssign?: "blame" | "round-robin" | "none" | undefined;
+        skipFor?: string[] | undefined;
+    })[] | undefined;
+    notify?: {
+        onFailure?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+        onReviewNeeded?: {
+            channel: "team-slack" | "author" | "webhook";
+            target?: string | undefined;
+            template?: "compact" | "detailed" | undefined;
+        }[] | undefined;
+    } | undefined;
+    gated?: string[] | undefined;
+    depends?: {
+        repo: string;
+        team?: string | undefined;
+        cascade?: boolean | undefined;
+        contractTest?: boolean | undefined;
+    }[] | undefined;
+    links?: {
+        status?: string | undefined;
+        docs?: string | undefined;
+        grafana?: string | undefined;
+        homepage?: string | undefined;
+    } | undefined;
+}>;
+export type TGittanYaml = z.infer<typeof GittanYamlSchema>;
+export declare const ImageTagSchema: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, string, string>;
+export declare const generateImageTag: (sha: string, date?: Date) => string;
+export type TImageTag = z.infer<typeof ImageTagSchema>;
+export declare const OrgSettingsSchema: z.ZodObject<{
+    id: z.ZodString;
+    name: z.ZodString;
+    displayName: z.ZodString;
+    oidc: z.ZodOptional<z.ZodObject<{
+        issuer: z.ZodString;
+        clientId: z.ZodString;
+        scimEnabled: z.ZodDefault<z.ZodBoolean>;
+        mandatorySso: z.ZodDefault<z.ZodBoolean>;
+    }, "strip", z.ZodTypeAny, {
+        issuer: string;
+        clientId: string;
+        scimEnabled: boolean;
+        mandatorySso: boolean;
+    }, {
+        issuer: string;
+        clientId: string;
+        scimEnabled?: boolean | undefined;
+        mandatorySso?: boolean | undefined;
+    }>>;
+    imageTagFormat: z.ZodDefault<z.ZodEnum<["date-sha"]>>;
+    allowLatestTag: z.ZodDefault<z.ZodBoolean>;
+    createdAt: z.ZodString;
+    updatedAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    name: string;
+    displayName: string;
+    createdAt: string;
+    updatedAt: string;
+    imageTagFormat: "date-sha";
+    allowLatestTag: boolean;
+    oidc?: {
+        issuer: string;
+        clientId: string;
+        scimEnabled: boolean;
+        mandatorySso: boolean;
+    } | undefined;
+}, {
+    id: string;
+    name: string;
+    displayName: string;
+    createdAt: string;
+    updatedAt: string;
+    oidc?: {
+        issuer: string;
+        clientId: string;
+        scimEnabled?: boolean | undefined;
+        mandatorySso?: boolean | undefined;
+    } | undefined;
+    imageTagFormat?: "date-sha" | undefined;
+    allowLatestTag?: boolean | undefined;
+}>;
+export type TOrgSettings = z.infer<typeof OrgSettingsSchema>;
+//# sourceMappingURL=repo.d.ts.map

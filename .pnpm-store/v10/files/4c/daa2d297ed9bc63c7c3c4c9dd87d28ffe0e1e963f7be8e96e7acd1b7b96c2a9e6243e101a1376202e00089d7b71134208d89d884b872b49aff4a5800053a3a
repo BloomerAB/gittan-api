@@ -1,0 +1,15 @@
+import type { Request, Response, NextFunction } from 'express';
+/**
+ * Normalize path to avoid high cardinality metrics.
+ * Replaces UUIDs and numeric IDs with :id placeholder.
+ */
+declare const normalizePath: (path: string) => string;
+/**
+ * Express middleware that tracks HTTP request metrics.
+ *
+ * Metrics collected:
+ * - http_requests_total: Counter with labels (method, path, status)
+ * - http_request_duration_ms: Histogram with labels (method, path, status)
+ */
+declare const httpRequestMiddleware: () => (req: Request, res: Response, next: NextFunction) => void;
+export { httpRequestMiddleware, normalizePath };

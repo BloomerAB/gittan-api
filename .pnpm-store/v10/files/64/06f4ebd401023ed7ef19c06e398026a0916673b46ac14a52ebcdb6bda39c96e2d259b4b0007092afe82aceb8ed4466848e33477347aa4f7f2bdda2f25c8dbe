@@ -1,0 +1,24 @@
+const generateRandomString = (length) => {
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const digits = '0123456789';
+    const allCharacters = lowercase + uppercase + digits;
+    let result = '';
+    // Ensure at least one uppercase letter and one digit
+    result += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+    result += digits.charAt(Math.floor(Math.random() * digits.length));
+    // Generate the remaining characters
+    for (let i = 2; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * allCharacters.length);
+        result += allCharacters.charAt(randomIndex);
+    }
+    // Shuffle the result to ensure the number and capital letter are in random positions
+    result = result
+        .split('')
+        .sort(() => 0.5 - Math.random())
+        .join('');
+    return result;
+};
+
+export { generateRandomString as default };
+//# sourceMappingURL=generate-random-string.js.map

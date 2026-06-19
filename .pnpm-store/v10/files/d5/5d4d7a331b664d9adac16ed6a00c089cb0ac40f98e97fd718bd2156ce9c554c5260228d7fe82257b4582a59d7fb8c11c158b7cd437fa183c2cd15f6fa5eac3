@@ -1,0 +1,7 @@
+import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+declare const onRequestDebug: (config: InternalAxiosRequestConfig<any>) => InternalAxiosRequestConfig<any>;
+declare const onRequestErrorDebug: (error: AxiosError) => AxiosError<unknown, any>;
+declare const onResponseDebug: (resp: AxiosResponse) => AxiosResponse<any, any, {}>;
+declare const onResponseErrorDebug: (error: AxiosError) => AxiosError<unknown, any>;
+declare const onErrorFormatException: (error: AxiosError) => never;
+export { onRequestDebug, onRequestErrorDebug, onResponseDebug, onResponseErrorDebug, onErrorFormatException, };

@@ -1,0 +1,14 @@
+import { registry } from './setup.js';
+
+const endpoint = async (_, res) => {
+    try {
+        res.set('Content-Type', registry.contentType);
+        res.end(await registry.metrics());
+    }
+    catch (ex) {
+        res.status(500).end(ex);
+    }
+};
+
+export { endpoint as default };
+//# sourceMappingURL=endpoint.js.map

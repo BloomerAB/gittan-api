@@ -1,0 +1,19 @@
+const bearerToken = {
+    type: 'oauth2',
+    description: 'User bearer token required, either produced by a user login or a client credentials token call. Token is expected to be opaque (rb_at_ prefix)',
+    flows: {
+        clientCredentials: {
+            tokenUrl: '/oauth/token',
+            scopes: {},
+        },
+    },
+};
+const SCHEMES = {
+    BEARER_TOKEN: 'bearerToken',
+};
+const securitySchemes = {
+    bearerToken,
+};
+
+export { SCHEMES, securitySchemes as default };
+//# sourceMappingURL=schemes.js.map

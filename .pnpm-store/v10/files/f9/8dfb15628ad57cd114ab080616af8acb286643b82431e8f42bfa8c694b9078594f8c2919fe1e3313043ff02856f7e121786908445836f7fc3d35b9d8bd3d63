@@ -1,0 +1,18 @@
+import Oauth2Error from '../../error/classes/Oauth2Error.js';
+import { OAUTH2_ERROR_TYPES } from '../../error/classes/oauth2_error.types.js';
+
+const scopes = (requiredScopes, existingScopes) => {
+    if (!requiredScopes.every((scope) => existingScopes?.includes(scope))) {
+        throw new Oauth2Error({
+            internalCode: 403,
+            externalCode: 403,
+            error: OAUTH2_ERROR_TYPES.invalidScope,
+            error_description: 'missing required scopes',
+        });
+    }
+    return true;
+};
+var validate = { scopes };
+
+export { validate as default };
+//# sourceMappingURL=scopes.js.map

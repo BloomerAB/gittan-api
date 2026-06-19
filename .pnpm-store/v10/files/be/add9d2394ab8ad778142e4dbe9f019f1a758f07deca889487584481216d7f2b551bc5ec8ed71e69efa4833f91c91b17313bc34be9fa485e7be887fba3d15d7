@@ -1,0 +1,7 @@
+import type { TCache } from './types';
+declare class CacheInterceptor {
+    private cacheConfig;
+    constructor(cacheConfig: TCache);
+    setupAxiosCache: (axiosInstance: any) => import("axios-cache-interceptor").AxiosCacheInstance;
+}
+export { CacheInterceptor };

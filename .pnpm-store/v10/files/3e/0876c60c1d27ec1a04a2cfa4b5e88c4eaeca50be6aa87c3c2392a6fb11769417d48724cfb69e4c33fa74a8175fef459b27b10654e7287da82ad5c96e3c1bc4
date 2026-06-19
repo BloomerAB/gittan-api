@@ -1,0 +1,168 @@
+import { glob } from 'glob';
+import path from 'path';
+
+/* eslint-disable no-console */
+const generateOperationId = (docFile) => {
+    const method = docFile.match(/\.doc\.([^.]+)\.(ts|js)$/)?.[1] || 'operation';
+    let pathPart = docFile
+        .replace(/\.doc\.[^.]+\.(ts|js)$/, '')
+        .replace(/(\/|^)index$/, '') // Remove index at end or if it's the whole path
+        .replace(/\[([^\]]+)\]/g, (_, param) => 'By' + param.charAt(0).toUpperCase() + param.slice(1))
+        .split('/')
+        .filter((part) => part) // Remove empty parts
+        .map((part, index) => {
+        return index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1);
+    })
+        .join('');
+    const methodPrefix = method.toLowerCase();
+    return (methodPrefix +
+        (pathPart ? pathPart.charAt(0).toUpperCase() + pathPart.slice(1) : ''));
+};
+const generateRoutePath = (docFile) => {
+    let routePath = docFile
+        .replace(/\.doc\.[^.]+\.(ts|js)$/, '')
+        .replace(/(\/|^)index$/, '') // Remove index at end or if it's the whole path
+        .replace(/\[([^\]]+)\]/g, '{$1}');
+    if (!routePath) {
+        return '/';
+    }
+    if (!routePath.startsWith('/')) {
+        routePath = '/' + routePath;
+    }
+    return routePath;
+};
+const findOperationDoc = (docModule) => {
+    const possibleNames = ['operation', 'userApiDoc', 'bffApiDoc', 'apiDoc'];
+    for (const name of possibleNames) {
+        if (docModule[name]) {
+            return docModule[name];
+        }
+    }
+    for (const [key, value] of Object.entries(docModule)) {
+        if (key.includes('ApiDoc') || key.includes('Operation')) {
+            return value;
+        }
+    }
+    return null;
+};
+const discoverRoutes = async (pathsDirectory = 'paths') => {
+    console.log(`🔍 Auto-discovering routes in folders named '${pathsDirectory}'`);
+    const operations = {};
+    const paths = {};
+    const routes = [];
+    // Search for all doc files first, then filter by paths directory
+    // In production, search dist/ first since that's where compiled files are
+    const isProduction = process.env.NODE_ENV === 'production';
+    const searchRoots = isProduction
+        ? ['dist', '.', path.join(process.cwd())]
+        : ['.', 'src', path.join(process.cwd())];
+    let docFiles = [];
+    for (const root of searchRoots) {
+        console.log(`🔍 Searching in root: '${root}' (absolute: ${path.isAbsolute(root)})`);
+        const found = await glob.sync('**/*.doc.*.{ts,js}', {
+            cwd: root,
+            ignore: ['**/node_modules/**', '**/*.d.ts'],
+        });
+        console.log(`📁 Found ${found.length} doc files:`, found);
+        // Filter files that are within a 'paths' directory and convert to absolute paths
+        // Use cross-platform path handling
+        const pathsDocFiles = found
+            .filter((file) => {
+            const normalizedFile = file.split(path.sep).join('/');
+            return (normalizedFile.includes(`${pathsDirectory}/`) ||
+                normalizedFile.includes(`/${pathsDirectory}/`));
+        })
+            .map((file) => path.isAbsolute(root)
+            ? path.join(root, file)
+            : path.join(process.cwd(), root, file));
+        if (pathsDocFiles.length > 0) {
+            docFiles = pathsDocFiles;
+            break;
+        }
+    }
+    if (docFiles.length === 0) {
+        console.warn(`⚠️  No doc files found in '${pathsDirectory}' directories`);
+        return { operations: {}, paths: {}, routes: [] };
+    }
+    for (const docFile of docFiles) {
+        await processDocFile({
+            docFile,
+            operations,
+            paths,
+            routes,
+            pathsDirectory,
+        });
+    }
+    console.log(`🎉 Successfully registered ${routes.length} routes`);
+    return { operations, paths, routes };
+};
+const processDocFile = async ({ docFile, operations, paths, routes, pathsDirectory = 'paths', }) => {
+    try {
+        const absoluteDocFile = path.isAbsolute(docFile)
+            ? docFile
+            : path.join(process.cwd(), docFile);
+        const docModule = await import(process.platform === 'win32'
+            ? `file://${absoluteDocFile}`
+            : absoluteDocFile);
+        // Extract just the relative path within the paths directory for operation ID generation
+        // Use cross-platform path handling
+        const normalizedDocFile = docFile.split(path.sep).join('/');
+        const pathsDirPattern = new RegExp(`.*/${pathsDirectory}/`);
+        const relativePath = normalizedDocFile.replace(pathsDirPattern, '');
+        const operationId = docModule.operationId || generateOperationId(relativePath);
+        const fileExtension = docFile.endsWith('.ts') ? 'ts' : 'js';
+        const handlerFile = docFile.replace(/\.doc\.[^.]+\.(ts|js)$/, `.${fileExtension}`);
+        const handlerPath = path.isAbsolute(handlerFile)
+            ? handlerFile
+            : path.join(process.cwd(), handlerFile);
+        const handlerModule = await importHandler(handlerPath, handlerFile);
+        if (!handlerModule)
+            return;
+        const method = docFile.match(/\.doc\.([^.]+)\.(ts|js)$/)?.[1];
+        const methodUpper = method?.toUpperCase();
+        if (!methodUpper || !handlerModule[methodUpper]) {
+            console.warn(`No ${methodUpper} export found in ${handlerFile}`);
+            return;
+        }
+        const operation = findOperationDoc(docModule);
+        if (!operation) {
+            console.warn(`No operation doc found in ${docFile}`);
+            return;
+        }
+        if (!operation.operationId) {
+            operation.operationId = operationId;
+        }
+        const routePath = generateRoutePath(relativePath);
+        const routeInfo = {
+            operationId,
+            operation,
+            handler: handlerModule[methodUpper],
+            path: routePath,
+            method: method.toLowerCase(),
+        };
+        operations[operationId] = routeInfo.handler;
+        if (!paths[routeInfo.path]) {
+            paths[routeInfo.path] = {};
+        }
+        paths[routeInfo.path][routeInfo.method] = routeInfo.operation;
+        routes.push(routeInfo);
+        console.log(`${routeInfo.path} registered`);
+    }
+    catch (error) {
+        console.warn(`Could not process doc file ${docFile}:`, error.message);
+    }
+};
+const importHandler = async (handlerPath, handlerFile) => {
+    try {
+        const importPath = process.platform === 'win32' ? `file://${handlerPath}` : handlerPath;
+        return await import(importPath);
+    }
+    catch (error) {
+        console.warn(`Could not import handler file ${handlerFile}:`, error.message);
+        console.warn(`  - Tried to import: ${handlerPath}`);
+        return null;
+    }
+};
+
+export { discoverRoutes, findOperationDoc, generateOperationId, generateRoutePath };
+//# sourceMappingURL=auto-discovery.js.map

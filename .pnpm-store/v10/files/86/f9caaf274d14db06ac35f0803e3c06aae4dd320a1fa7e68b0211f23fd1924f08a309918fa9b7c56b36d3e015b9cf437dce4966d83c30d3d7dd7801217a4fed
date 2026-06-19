@@ -1,0 +1,16 @@
+import authorizationHeader from './authorization-header.js';
+import environmentVariable from './environment-variable.js';
+import jwtToken from './jwt-token.js';
+import * as index from './keys/index.js';
+import opaqueToken from './opaque-token.js';
+
+var validate = {
+    authorizationHeader,
+    environmentVariable,
+    jwtToken,
+    keys: index,
+    opaqueToken,
+};
+
+export { validate as default };
+//# sourceMappingURL=index.js.map

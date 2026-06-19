@@ -1,0 +1,23 @@
+import { setupCache, buildMemoryStorage } from 'axios-cache-interceptor';
+
+const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
+class CacheInterceptor {
+    cacheConfig;
+    constructor(cacheConfig) {
+        this.cacheConfig = cacheConfig;
+    }
+    setupAxiosCache = (axiosInstance) => {
+        return setupCache(axiosInstance, {
+            storage: buildMemoryStorage(),
+            ttl: this.cacheConfig.ttl || DEFAULT_TTL,
+            methods: ['get'],
+            cachePredicate: (response) => response.status === 200,
+            generateKey: (request) => {
+                return this.cacheConfig.key || request.url;
+            },
+        });
+    };
+}
+
+export { CacheInterceptor };
+//# sourceMappingURL=interceptor.cache.js.map

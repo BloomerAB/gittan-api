@@ -1,0 +1,201 @@
+import addFormats from 'ajv-formats';
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express from 'express';
+import multer from 'multer';
+import { OpenAPIBackend } from 'openapi-backend';
+import redoc from 'redoc-express';
+import endpoint from '../metrics/endpoint.js';
+import { httpRequestMiddleware } from '../metrics/httpMiddleware.js';
+import middleware from '../middleware/index.js';
+import { cacheResponseHandler } from '../middleware/cacheResponseHandler.js';
+import { convertToLowercase } from '../open-api/input-coercion/convert-to-lower-case.js';
+import 'jsonwebtoken';
+import 'jwks-rsa';
+import 'axios';
+import '../metrics/setup.js';
+import 'axios-cache-interceptor';
+import securitySchemes from '../security/schemes.js';
+import { discoverRoutes } from './auto-discovery.js';
+import handlers from './handlers/index.js';
+
+/**
+ * Sets up an Express application with OpenAPI required configurations and routes.
+ *
+ * This function initializes an Express app, configures API documentation,
+ * sets up security schemes, and adds various routes including health check,
+ * API docs, and metrics endpoints. It also ensures that necessary environment
+ * variables are set and integrates error handling and security configurations.
+ *
+ * @async
+ * @function
+ * @param {Object} params - The configuration parameters for setting up the app.
+ * @param {Object} params.apiDoc - The OpenAPI specification document for the API.
+ * @param {string} params.operations   - The methods to be used for each operation ID.
+ * @param {string} params.pathPrefix - The prefix for the API paths.
+ *
+ * @returns {Promise<express.Application>} The configured Express app.
+ *
+ * @throws {Error} Will throw an error if the EPI_JWKS_URI and/or ORY_INTROSPECT_URI environment variable are not set.
+ */
+const setupApp = async ({ apiDoc, operations, pathPrefix, paths = 'paths', corsString, }) => {
+    console.log('🔧 [SETUP-APP] Initializing with CONDITIONAL BODY PARSING v2');
+    const app = express();
+    // Helper function to serialize objects with circular references
+    const safeJsonStringify = (obj) => {
+        const seen = new WeakSet();
+        return JSON.stringify(obj, (key, value) => {
+            if (typeof value === 'object' && value !== null) {
+                if (seen.has(value)) {
+                    // Handle circular reference - for OpenAPI $ref, keep the reference string
+                    if (typeof value.$ref === 'string') {
+                        return { $ref: value.$ref };
+                    }
+                    return '[Circular Reference]';
+                }
+                seen.add(value);
+            }
+            return value;
+        });
+    };
+    if (corsString) {
+        const origins = corsString.split(',').map((origin) => origin.trim());
+        app.use(cors({
+            origin: origins,
+            credentials: true,
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+            allowedHeaders: [
+                'Content-Type',
+                'Authorization',
+                'X-Cache-Key-Context',
+                'Cache-Control',
+            ],
+        }));
+    }
+    // HTTP request metrics middleware - tracks request count and duration
+    app.use(httpRequestMiddleware());
+    // Special handling for Stripe webhook routes that need raw body for signature verification
+    // Create the parsers once to reuse them
+    const rawBodyParser = express.raw({ type: 'application/json' });
+    const rawBodyLargeParser = express.raw({ type: 'application/json', limit: '50mb' });
+    // Capture raw body bytes for routes that need HMAC verification over raw JSON.
+    // Stored as req.rawBody so webhook handlers can run timingSafeEqual without re-parse.
+    const jsonBodyParser = express.json({
+        verify: (req, _res, buf) => {
+            req.rawBody = buf;
+        },
+    });
+    const multipartParser = multer({ storage: multer.memoryStorage() }).any();
+    // Conditional body parsing based on content-type and route
+    app.use((req, res, next) => {
+        const hasStripeSignature = !!req.headers['stripe-signature'];
+        const hasHmacSignature = !!req.headers['x-webhook-signature'];
+        const contentType = req.headers['content-type'] || '';
+        const isMultipart = contentType.includes('multipart/form-data');
+        if (hasStripeSignature) {
+            console.log('[Body Parser] Using express.raw() for stripe');
+            rawBodyParser(req, res, next);
+        }
+        else if (hasHmacSignature) {
+            // Haraka and similar HMAC-signed webhooks — use raw body (large limit for attachments)
+            rawBodyLargeParser(req, res, next);
+        }
+        else if (isMultipart) {
+            console.log('[Body Parser] Using multer for multipart/form-data');
+            multipartParser(req, res, (err) => {
+                if (err) {
+                    console.error('[Body Parser] Multer error:', err);
+                    return next(err);
+                }
+                // Copy parsed fields to req.body for OpenAPI validation
+                // multer puts fields in req.body already, files in req.files
+                next();
+            });
+        }
+        else {
+            jsonBodyParser(req, res, next);
+        }
+    });
+    app.use(cookieParser());
+    app.use(bodyParser.urlencoded({ extended: true }));
+    app.disable('x-powered-by');
+    // Auto-discover routes if operations not provided
+    let resolvedOperations = operations;
+    if (!operations) {
+        const discovery = await discoverRoutes(paths);
+        resolvedOperations = discovery.operations;
+        // Merge discovered paths into apiDoc
+        apiDoc.paths = {
+            ...apiDoc.paths,
+            ...discovery.paths,
+        };
+    }
+    apiDoc.components.securitySchemes = {
+        ...apiDoc.components.securitySchemes,
+        ...securitySchemes,
+    };
+    app.get(`${pathPrefix}/healthz`, (_, res) => {
+        res.status(200).send();
+    });
+    // Serve the API definition BEFORE OpenAPI Backend processes it
+    // This prevents circular reference issues from resolved $ref references
+    app.get(`${pathPrefix}/api-definition`, (_, res) => {
+        try {
+            // Use safe JSON stringification to handle any circular references
+            const jsonString = safeJsonStringify(apiDoc);
+            res.setHeader('Content-Type', 'application/json');
+            res.send(jsonString);
+        }
+        catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('Error serializing API document:', error);
+            res.status(500).json({
+                error: 'Unable to serialize API definition',
+                message: error instanceof Error ? error.message : 'Unknown error',
+                details: 'The API definition contains circular references that cannot be serialized to JSON',
+            });
+        }
+    });
+    app.get(`${pathPrefix}/docs`, redoc({
+        title: 'API Docs',
+        specUrl: `${pathPrefix}/api-definition`,
+    }));
+    app.get(`${pathPrefix}/metrics`, endpoint);
+    const openapi = new OpenAPIBackend({
+        definition: apiDoc,
+        // AJV is used for validation of requests and can be customized to suit future needs as well
+        // https://ajv.js.org/
+        // This enables the use of the `convertToLowercase` keyword for specific schemas
+        customizeAjv: (ajv) => {
+            ajv.addKeyword(convertToLowercase);
+            addFormats(ajv);
+            return ajv;
+        },
+    });
+    const validationFailHandler = handlers.createValidationFailHandler();
+    // Register validation fail handler BEFORE operation handlers, otherwise the custom keywords will not be applied
+    openapi.register('validationFail', validationFailHandler);
+    const operationHandlers = handlers.createOperationHandlers(resolvedOperations);
+    for (const handler of operationHandlers) {
+        for (const [operationId, controller] of Object.entries(handler)) {
+            openapi.register(operationId, controller);
+        }
+    }
+    app.use(cacheResponseHandler);
+    openapi.init();
+    // Use OpenAPI Backend to handle incoming requests
+    app.use(async (req, res, next) => {
+        try {
+            await openapi.handleRequest(req, req, res);
+        }
+        catch (error) {
+            next(error); // This ensures errors are passed to the error handler
+        }
+    });
+    app.use(middleware.errorHandler);
+    return app;
+};
+
+export { setupApp as default };
+//# sourceMappingURL=setup-app.js.map

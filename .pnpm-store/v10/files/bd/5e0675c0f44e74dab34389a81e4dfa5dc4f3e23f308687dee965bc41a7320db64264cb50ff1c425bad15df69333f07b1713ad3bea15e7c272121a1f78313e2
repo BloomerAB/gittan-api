@@ -1,0 +1,31 @@
+import jwksClient from 'jwks-rsa';
+import Oauth2Error from '../../../error/classes/Oauth2Error.js';
+import { OAUTH2_ERROR_TYPES } from '../../../error/classes/oauth2_error.types.js';
+
+/* istanbul ignore file */
+let client;
+const getJwksClient = async (jwksUri) => {
+    if (!client)
+        client = jwksClient({
+            cache: true,
+            cacheMaxAge: 600000, // Cache for 10 minutes (600,000 ms)
+            jwksUri: jwksUri,
+        });
+    return client;
+};
+const getJwksClientInstance = async (jwksUri) => {
+    try {
+        return await getJwksClient(jwksUri);
+    }
+    catch (err) {
+        throw new Oauth2Error({
+            internalCode: 401,
+            externalCode: 401,
+            error: OAUTH2_ERROR_TYPES.accessDenied,
+            error_description: `Failed to initialize JWKS client for URI: ${jwksUri}. Error: ${err.message}`,
+        });
+    }
+};
+
+export { getJwksClientInstance };
+//# sourceMappingURL=get-jwks-client.js.map

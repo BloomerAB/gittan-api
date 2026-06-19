@@ -1,0 +1,14 @@
+import type { Request } from 'express';
+interface AuthenticatedRequest extends Request {
+    user?: {
+        id: string;
+        customerNo: string;
+        companyId?: string;
+        email?: string;
+        role?: string;
+        vivaldiUserId: string;
+        onlyShowUserOrders: boolean;
+        permissions?: Record<string, boolean>;
+    };
+}
+export type { AuthenticatedRequest };

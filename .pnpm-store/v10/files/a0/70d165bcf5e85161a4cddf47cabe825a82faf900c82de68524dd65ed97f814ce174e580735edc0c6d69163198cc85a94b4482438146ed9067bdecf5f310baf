@@ -1,0 +1,4 @@
+declare const _default: {
+    errorHandler: (err: import("..").BaseError | Error | unknown, req: import("express").Request, res: import("express").Response, _next?: import("express").NextFunction) => void;
+};
+export default _default;

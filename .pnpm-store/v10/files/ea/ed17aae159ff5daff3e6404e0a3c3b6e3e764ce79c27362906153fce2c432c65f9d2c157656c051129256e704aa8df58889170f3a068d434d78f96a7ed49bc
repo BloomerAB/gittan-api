@@ -1,0 +1,12 @@
+import type { Handler } from 'openapi-backend';
+import type { TOperations } from '../server.types';
+/**
+ * Creates a handler for each operation, and registers relevant security handlers.
+ * Security handlers are added to the operation's `security` array, and are a list of schemes (objects containing different requirements).
+ * If a scheme contains more than one requirement, the scheme is considered fulfilled/authorized
+ * if _any_ of the requirement is met, i.e. an OR operation.
+ * If the security array consists of more than one scheme, the operation is considered fulfilled/authorized
+ * if _all_ schemes are met, i.e. an AND operation.
+ * */
+declare const createOperationHandlers: (operations: TOperations) => Record<string, Handler>[];
+export default createOperationHandlers;

@@ -1,0 +1,3 @@
+import type { TPost } from './types';
+declare const patch: ({ body, clientCredentials, headers, retries, timeout, token, tracking, url, }: TPost) => Promise<any>;
+export default patch;

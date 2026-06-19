@@ -1,0 +1,2 @@
+declare const environmentVariable: (variableName: string, errorDescription: string) => void;
+export default environmentVariable;

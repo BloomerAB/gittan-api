@@ -25,7 +25,10 @@ const stubDeps = (
 ) => {
   initDeps({
     config: {} as any,
-    db: {} as any,
+    db: {
+      execute: vi.fn().mockResolvedValue({ rowLength: 0, first: () => ({}) }),
+      batch: vi.fn(),
+    } as any,
     nats: nats as any,
     teamRepo: {} as any,
     repoMetadata,

@@ -1,0 +1,83 @@
+import { z } from "zod";
+export declare const OrgRoleSchema: z.ZodEnum<["org-admin"]>;
+export declare const TeamRoleSchema: z.ZodEnum<["team-admin", "writer", "reader"]>;
+export declare const RoleSchema: z.ZodUnion<[z.ZodEnum<["org-admin"]>, z.ZodEnum<["team-admin", "writer", "reader"]>]>;
+export type TRole = z.infer<typeof RoleSchema>;
+export declare const TeamMemberSchema: z.ZodObject<{
+    userId: z.ZodString;
+    teamId: z.ZodString;
+    role: z.ZodEnum<["team-admin", "writer", "reader"]>;
+    addedAt: z.ZodString;
+    addedBy: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    userId: string;
+    teamId: string;
+    role: "team-admin" | "writer" | "reader";
+    addedAt: string;
+    addedBy: string;
+}, {
+    userId: string;
+    teamId: string;
+    role: "team-admin" | "writer" | "reader";
+    addedAt: string;
+    addedBy: string;
+}>;
+export type TTeamMember = z.infer<typeof TeamMemberSchema>;
+export declare const TopologySchema: z.ZodEnum<["stream-aligned", "platform", "enabling", "complicated-subsystem"]>;
+export type TTopology = z.infer<typeof TopologySchema>;
+export declare const TeamSchema: z.ZodObject<{
+    id: z.ZodString;
+    orgId: z.ZodString;
+    name: z.ZodString;
+    displayName: z.ZodString;
+    topology: z.ZodDefault<z.ZodEnum<["stream-aligned", "platform", "enabling", "complicated-subsystem"]>>;
+    slackChannel: z.ZodOptional<z.ZodString>;
+    createdAt: z.ZodString;
+    updatedAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    orgId: string;
+    name: string;
+    displayName: string;
+    topology: "stream-aligned" | "platform" | "enabling" | "complicated-subsystem";
+    createdAt: string;
+    updatedAt: string;
+    slackChannel?: string | undefined;
+}, {
+    id: string;
+    orgId: string;
+    name: string;
+    displayName: string;
+    createdAt: string;
+    updatedAt: string;
+    topology?: "stream-aligned" | "platform" | "enabling" | "complicated-subsystem" | undefined;
+    slackChannel?: string | undefined;
+}>;
+export type TTeam = z.infer<typeof TeamSchema>;
+export declare const OrgSchema: z.ZodObject<{
+    id: z.ZodString;
+    name: z.ZodString;
+    displayName: z.ZodString;
+    oidcIssuer: z.ZodOptional<z.ZodString>;
+    oidcClientId: z.ZodOptional<z.ZodString>;
+    createdAt: z.ZodString;
+    updatedAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    name: string;
+    displayName: string;
+    createdAt: string;
+    updatedAt: string;
+    oidcIssuer?: string | undefined;
+    oidcClientId?: string | undefined;
+}, {
+    id: string;
+    name: string;
+    displayName: string;
+    createdAt: string;
+    updatedAt: string;
+    oidcIssuer?: string | undefined;
+    oidcClientId?: string | undefined;
+}>;
+export type TOrg = z.infer<typeof OrgSchema>;
+//# sourceMappingURL=team.d.ts.map

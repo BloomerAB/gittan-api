@@ -1,0 +1,4 @@
+declare const _default: {
+    istokenExpired: (expiryTime: number) => boolean;
+};
+export default _default;

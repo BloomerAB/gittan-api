@@ -1,0 +1,3 @@
+declare const reportCounter: (name: string, description: string, labels: Partial<Record<string, string | number>>) => void;
+declare const reportHistogram: (name: string, description: string, labels: Partial<Record<string, string | number>>, value: number) => void;
+export { reportCounter, reportHistogram };

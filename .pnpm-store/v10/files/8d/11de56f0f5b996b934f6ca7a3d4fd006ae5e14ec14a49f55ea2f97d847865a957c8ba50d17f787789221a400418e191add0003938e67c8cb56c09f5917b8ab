@@ -1,0 +1,257 @@
+import { BaseError } from '../error/classes/BaseError.js';
+
+// Extract and format stack trace into condensed readable format
+const formatStackTrace = (stack) => {
+    try {
+        const lines = stack.split('\n');
+        const relevantLines = [];
+        for (let i = 1; i < lines.length && relevantLines.length < 6; i++) {
+            const line = lines[i]?.trim();
+            if (!line || !line.startsWith('at '))
+                continue;
+            // Skip irrelevant stack entries
+            if (line.includes('node_modules') ||
+                line.includes('internal/') ||
+                line.includes('async_hooks') ||
+                line.includes('processTicksAndRejections')) {
+                continue;
+            }
+            // Extract meaningful part: "at functionName (file:line:col)"
+            // Skip "async" keyword if present: "at async functionName" -> "functionName"
+            const match = line.match(/at\s+(?:async\s+)?([^\s(]+)(?:\s+\(([^)]+)\))?/);
+            if (match) {
+                const [, functionName, location] = match;
+                // Clean up function name
+                let cleanFunction = functionName;
+                if (cleanFunction.includes('.')) {
+                    const parts = cleanFunction.split('.');
+                    cleanFunction = parts[parts.length - 1]; // Take last part
+                }
+                // Extract file path and line from location
+                let fileInfo = '';
+                if (location) {
+                    const fileParts = location.split('/');
+                    // Get last 3 path segments (e.g., "controller/orders/search.ts:22:5")
+                    // This helps distinguish between files with same name in different layers/folders
+                    const lastSegments = fileParts.slice(-3).join('/');
+                    const fileMatch = lastSegments.match(/([^:]+):(\d+)/);
+                    if (fileMatch) {
+                        const [, filePath, lineNum] = fileMatch;
+                        fileInfo = `${filePath}:${lineNum}`;
+                    }
+                }
+                // Format as function@file:line or just function
+                const formatted = fileInfo
+                    ? `${cleanFunction}@${fileInfo}`
+                    : cleanFunction;
+                relevantLines.push(formatted);
+            }
+        }
+        return relevantLines.length > 0 ? relevantLines.join('->') : 'no-trace';
+    }
+    catch {
+        return 'trace-parse-failed';
+    }
+};
+// Battle-tested error serialization with multiple fallback levels
+const createSafeErrorLog = (err, req) => {
+    try {
+        // Build error info object with safe property access
+        const errorData = {
+            timestamp: new Date().toISOString(),
+            url: req?.url || 'unknown',
+            method: req?.method || 'unknown',
+            message: 'Unknown error',
+            type: 'Unknown',
+        };
+        // Safely extract error properties
+        if (err && typeof err === 'object') {
+            const error = err;
+            // Message - direct property access
+            if (error.message !== undefined) {
+                errorData.message = String(error.message);
+            }
+            // Type - direct property access
+            if (error.constructor?.name) {
+                errorData.type = error.constructor.name;
+            }
+            // Status codes - direct property access (extract first to determine if stack needed)
+            if (typeof error.status === 'number')
+                errorData.status = error.status;
+            if (typeof error.statusCode === 'number')
+                errorData.statusCode = error.statusCode;
+            if (typeof error.externalCode === 'number')
+                errorData.externalCode = error.externalCode;
+            // Stack trace (condensed format) - only for 5xx errors or unknown status
+            // Client errors (4xx) don't need stack traces
+            const statusCode = errorData.externalCode || errorData.status || errorData.statusCode;
+            const shouldIncludeStack = !statusCode || statusCode >= 500;
+            if (shouldIncludeStack) {
+                try {
+                    if (typeof error.stack === 'string' && error.stack.length > 0) {
+                        errorData.stack = formatStackTrace(error.stack);
+                    }
+                }
+                catch {
+                    errorData.stack = 'stack-unavailable';
+                }
+            }
+        }
+        else if (typeof err === 'string') {
+            errorData.message = err;
+            errorData.type = 'String';
+        }
+        else if (err !== null && err !== undefined) {
+            try {
+                errorData.message = String(err);
+                errorData.type = typeof err;
+            }
+            catch {
+                errorData.message = 'Non-serializable error';
+            }
+        }
+        // Safely stringify with circular reference protection
+        return JSON.stringify(errorData, (key, value) => {
+            if (typeof value === 'function')
+                return '[Function]';
+            if (typeof value === 'symbol')
+                return '[Symbol]';
+            if (typeof value === 'bigint')
+                return value.toString() + 'n';
+            return value;
+        });
+    }
+    catch {
+        // Ultimate fallback - should never fail
+        try {
+            const fallback = {
+                timestamp: new Date().toISOString(),
+                message: 'Error serialization failed',
+                url: req?.url || 'unknown',
+                method: req?.method || 'unknown',
+                originalError: String(err).substring(0, 100),
+            };
+            return JSON.stringify(fallback);
+        }
+        catch {
+            // Last resort
+            return `{"timestamp":"${new Date().toISOString()}","message":"Critical error logging failure"}`;
+        }
+    }
+};
+const errorHandler = (err, req, res, _next) => {
+    // NEVER let logging crash the error handler
+    try {
+        const logMessage = createSafeErrorLog(err, req);
+        // eslint-disable-next-line no-console
+        console.error(logMessage);
+    }
+    catch {
+        // Absolute last resort logging
+        try {
+            // eslint-disable-next-line no-console
+            console.error(`CRITICAL: Error handler logging failed for ${req?.url}`);
+        }
+        catch {
+            // Give up on logging, but continue with response
+        }
+    }
+    // NEVER let response sending crash - multiple safeguards
+    let statusCode = 500;
+    let message = 'Internal server error';
+    // Safely extract response info
+    try {
+        if (err instanceof BaseError) {
+            // BaseError handling - keep original logic
+            statusCode = err.externalCode || 500;
+            message = err.message || 'Internal server error';
+        }
+        else if (err && typeof err === 'object') {
+            const error = err;
+            // Extract message safely
+            try {
+                if (typeof error.message === 'string' && error.message.length > 0) {
+                    message = error.message.substring(0, 500); // Prevent huge messages
+                    // Status code inference from message (conservative, case-insensitive)
+                    const lowerMessage = message.toLowerCase();
+                    if (lowerMessage.includes('methodnotallowed') ||
+                        lowerMessage.includes('405')) {
+                        statusCode = 405;
+                    }
+                    else if (lowerMessage.includes('not found') ||
+                        lowerMessage.includes('404')) {
+                        statusCode = 404;
+                    }
+                    else if (lowerMessage.includes('validation') ||
+                        lowerMessage.includes('400')) {
+                        statusCode = 400;
+                    }
+                    else if (lowerMessage.includes('unauthorized') ||
+                        lowerMessage.includes('401')) {
+                        statusCode = 401;
+                    }
+                    else if (lowerMessage.includes('forbidden') ||
+                        lowerMessage.includes('403')) {
+                        statusCode = 403;
+                    }
+                }
+            }
+            catch {
+                // Keep defaults
+            }
+            // Extract explicit status code
+            try {
+                if (typeof error.status === 'number' &&
+                    error.status >= 100 &&
+                    error.status < 600) {
+                    statusCode = error.status;
+                }
+                else if (typeof error.statusCode === 'number' &&
+                    error.statusCode >= 100 &&
+                    error.statusCode < 600) {
+                    statusCode = error.statusCode;
+                }
+            }
+            catch {
+                // Keep inferred status
+            }
+        }
+        else if (typeof err === 'string') {
+            message = err.substring(0, 500);
+        }
+    }
+    catch {
+        // Keep safe defaults if everything fails
+    }
+    // Send response with ultimate error handling
+    try {
+        if (!res.headersSent) {
+            res.status(statusCode).json({
+                code: statusCode,
+                message: message,
+            });
+        }
+    }
+    catch {
+        // If JSON response fails, try plain text
+        try {
+            if (!res.headersSent) {
+                res.status(statusCode).send(message);
+            }
+        }
+        catch {
+            // If everything fails, try absolute minimum
+            try {
+                if (!res.headersSent) {
+                    res.status(500).end('Internal Server Error');
+                }
+            }
+            catch {
+                // At this point, we've done everything possible
+            }
+        }
+    }
+};
+
+export { errorHandler as default };
+//# sourceMappingURL=errorHandler.js.map

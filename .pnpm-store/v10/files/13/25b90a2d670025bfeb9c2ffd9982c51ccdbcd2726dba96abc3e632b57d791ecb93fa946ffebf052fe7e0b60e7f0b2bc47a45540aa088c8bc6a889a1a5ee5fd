@@ -1,0 +1,10 @@
+const createValidationFailHandler = () => {
+    return (context, _req, res) => {
+        return res
+            .status(400)
+            .json({ status: 400, err: context.validation.errors });
+    };
+};
+
+export { createValidationFailHandler as default };
+//# sourceMappingURL=create-validation-fail-handler.js.map

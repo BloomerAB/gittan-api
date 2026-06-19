@@ -1,0 +1,2 @@
+declare const authorizationHeader: (headers: Record<string, string | unknown>) => string;
+export default authorizationHeader;

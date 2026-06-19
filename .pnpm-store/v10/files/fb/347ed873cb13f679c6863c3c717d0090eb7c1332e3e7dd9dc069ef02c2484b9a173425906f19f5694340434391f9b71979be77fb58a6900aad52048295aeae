@@ -1,0 +1,16 @@
+import ConfigError from '../../error/classes/ConfigError.js';
+
+const environmentVariable = (variableName, errorDescription) => {
+    const requiredEnvVariable = process.env[variableName];
+    if (!requiredEnvVariable) {
+        // eslint-disable-next-line no-console
+        console.error({
+            level: 'error',
+            message: `Environment variable ${variableName} is missing - ${errorDescription}`,
+        });
+        throw new ConfigError(`[${variableName}] ${errorDescription}`);
+    }
+};
+
+export { environmentVariable as default };
+//# sourceMappingURL=environment-variable.js.map

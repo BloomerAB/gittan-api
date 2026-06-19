@@ -1,0 +1,5 @@
+import { BaseError, type TBaseErrorProps } from './BaseError';
+declare class InternalServerError extends BaseError {
+    constructor({ externalCode, internalCode, message }: TBaseErrorProps);
+}
+export default InternalServerError;

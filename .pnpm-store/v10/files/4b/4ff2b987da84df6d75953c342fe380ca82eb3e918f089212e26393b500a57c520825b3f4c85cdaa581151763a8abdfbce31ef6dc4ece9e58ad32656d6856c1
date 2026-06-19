@@ -1,0 +1,9 @@
+import type { OpenAPIV3 } from 'openapi-types';
+declare const SCHEMES: {
+    BEARER_TOKEN: string;
+};
+declare const securitySchemes: {
+    bearerToken: OpenAPIV3.OAuth2SecurityScheme;
+};
+export default securitySchemes;
+export { SCHEMES };

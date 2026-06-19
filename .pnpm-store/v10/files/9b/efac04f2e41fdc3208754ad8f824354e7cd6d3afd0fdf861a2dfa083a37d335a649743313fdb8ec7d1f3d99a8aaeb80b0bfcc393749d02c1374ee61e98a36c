@@ -1,0 +1,3 @@
+import type jwksClient from 'jwks-rsa';
+declare const getPublicKey: (key: jwksClient.SigningKey) => string;
+export { getPublicKey };

@@ -1,0 +1,15 @@
+import { BaseError } from './BaseError.js';
+
+class Conflict extends BaseError {
+    constructor(message, externalCode) {
+        super({
+            externalCode: externalCode || 409,
+            internalCode: 409,
+            message: message || 'The resource already exists',
+        });
+        Error.captureStackTrace(this, Conflict);
+    }
+}
+
+export { Conflict as default };
+//# sourceMappingURL=Conflict.js.map
