@@ -15,6 +15,8 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
     displayName: org.displayName,
     role: "owner",
     plan: "starter",
+    oidcIssuer: org.oidcIssuer,
+    mandatorySso: org.mandatorySso,
     createdAt: org.createdAt,
     updatedAt: org.updatedAt,
   }))

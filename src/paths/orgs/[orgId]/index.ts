@@ -24,6 +24,7 @@ const UpdateOrgBody = z.object({
   oidcIssuer: z.string().url().nullable().optional(),
   oidcClientId: z.string().nullable().optional(),
   oidcClientSecret: z.string().nullable().optional(),
+  mandatorySso: z.boolean().optional(),
   slackClientId: z.string().nullable().optional(),
   slackClientSecret: z.string().nullable().optional(),
   slackBotToken: z.string().nullable().optional(),

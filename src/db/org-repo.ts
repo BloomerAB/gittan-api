@@ -9,6 +9,7 @@ export type TOrg = {
   readonly oidcIssuer?: string
   readonly oidcClientId?: string
   readonly oidcClientSecret?: string
+  readonly mandatorySso: boolean
   readonly slackClientId?: string
   readonly slackClientSecret?: string
   readonly slackBotToken?: string
@@ -28,6 +29,7 @@ export type TUpdateOrgInput = {
   readonly oidcIssuer?: string | null
   readonly oidcClientId?: string | null
   readonly oidcClientSecret?: string | null
+  readonly mandatorySso?: boolean
   readonly slackClientId?: string | null
   readonly slackClientSecret?: string | null
   readonly slackBotToken?: string | null
@@ -41,6 +43,7 @@ const rowToOrg = (row: Record<string, unknown>): TOrg => ({
   oidcIssuer: (row.oidc_issuer as string | null) ?? undefined,
   oidcClientId: (row.oidc_client_id as string | null) ?? undefined,
   oidcClientSecret: (row.oidc_client_secret as string | null) ?? undefined,
+  mandatorySso: (row.mandatory_sso as boolean | null) ?? false,
   slackClientId: (row.slack_client_id as string | null) ?? undefined,
   slackClientSecret: (row.slack_client_secret as string | null) ?? undefined,
   slackBotToken: (row.slack_bot_token as string | null) ?? undefined,
@@ -81,6 +84,7 @@ export const createOrgRepo = (client: Client) => ({
       id: input.id,
       name: input.name,
       displayName: input.displayName,
+      mandatorySso: false,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     }
@@ -116,6 +120,7 @@ export const createOrgRepo = (client: Client) => ({
     const oidcIssuer = resolve("oidc_issuer", input.oidcIssuer)
     const oidcClientId = resolve("oidc_client_id", input.oidcClientId)
     const oidcClientSecret = resolve("oidc_client_secret", input.oidcClientSecret)
+    const mandatorySso = input.mandatorySso !== undefined ? input.mandatorySso : ((row.mandatory_sso as boolean | null) ?? false)
     const slackClientId = resolve("slack_client_id", input.slackClientId)
     const slackClientSecret = resolve("slack_client_secret", input.slackClientSecret)
     const slackBotToken = resolve("slack_bot_token", input.slackBotToken)
@@ -124,10 +129,10 @@ export const createOrgRepo = (client: Client) => ({
     await client.execute(
       `UPDATE ${KEYSPACE}.orgs
        SET display_name = ?, oidc_issuer = ?, oidc_client_id = ?, oidc_client_secret = ?,
-           slack_client_id = ?, slack_client_secret = ?, slack_bot_token = ?, slack_team_name = ?,
+           mandatory_sso = ?, slack_client_id = ?, slack_client_secret = ?, slack_bot_token = ?, slack_team_name = ?,
            updated_at = ?
        WHERE id = ?`,
-      [displayName, oidcIssuer, oidcClientId, oidcClientSecret, slackClientId, slackClientSecret, slackBotToken, slackTeamName, now, id],
+      [displayName, oidcIssuer, oidcClientId, oidcClientSecret, mandatorySso, slackClientId, slackClientSecret, slackBotToken, slackTeamName, now, id],
       { prepare: true },
     )
 
@@ -138,6 +143,7 @@ export const createOrgRepo = (client: Client) => ({
       oidcIssuer: oidcIssuer ?? undefined,
       oidcClientId: oidcClientId ?? undefined,
       oidcClientSecret: oidcClientSecret ?? undefined,
+      mandatorySso,
       slackClientId: slackClientId ?? undefined,
       slackClientSecret: slackClientSecret ?? undefined,
       slackBotToken: slackBotToken ?? undefined,

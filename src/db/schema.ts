@@ -37,6 +37,7 @@ export const CREATE_TABLES = [
     oidc_issuer text,
     oidc_client_id text,
     oidc_client_secret text,
+    mandatory_sso boolean,
     slack_client_id text,
     slack_client_secret text,
     slack_bot_token text,
