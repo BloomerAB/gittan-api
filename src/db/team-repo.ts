@@ -1,5 +1,5 @@
 import type { Client } from "cassandra-driver"
-import type { TTeam, TTeamMember, TTopology } from "@bloomerab/gittan-types"
+import type { TTeam, TTeamMember } from "@bloomerab/gittan-types"
 
 import { KEYSPACE } from "./schema.js"
 
@@ -8,7 +8,6 @@ export type TCreateTeamInput = {
   readonly orgId: string
   readonly name: string
   readonly displayName: string
-  readonly topology?: TTopology
   readonly slackChannel?: string
 }
 
@@ -21,7 +20,6 @@ export type TAddMemberInput = {
 
 export type TUpdateTeamInput = {
   readonly displayName?: string
-  readonly topology?: TTopology
   readonly slackChannel?: string | null
 }
 
@@ -39,18 +37,16 @@ export const createTeamRepo = (client: Client) => ({
       throw new Error(`Team "${input.name}" already exists in this org`)
     }
 
-    const topology = input.topology ?? "stream-aligned"
-
     const batch = [
       {
-        query: `INSERT INTO ${KEYSPACE}.teams (id, org_id, name, display_name, topology, slack_channel, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        params: [input.id, input.orgId, input.name, input.displayName, topology, input.slackChannel ?? null, now, now],
+        query: `INSERT INTO ${KEYSPACE}.teams (id, org_id, name, display_name, slack_channel, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        params: [input.id, input.orgId, input.name, input.displayName, input.slackChannel ?? null, now, now],
       },
       {
-        query: `INSERT INTO ${KEYSPACE}.teams_by_name (org_id, name, team_id, topology)
-                VALUES (?, ?, ?, ?)`,
-        params: [input.orgId, input.name, input.id, topology],
+        query: `INSERT INTO ${KEYSPACE}.teams_by_name (org_id, name, team_id)
+                VALUES (?, ?, ?)`,
+        params: [input.orgId, input.name, input.id],
       },
     ]
 
@@ -61,7 +57,6 @@ export const createTeamRepo = (client: Client) => ({
       orgId: input.orgId,
       name: input.name,
       displayName: input.displayName,
-      topology,
       slackChannel: input.slackChannel,
       createdAt: now,
       updatedAt: now,
@@ -81,34 +76,23 @@ export const createTeamRepo = (client: Client) => ({
     const now = new Date().toISOString()
 
     const displayName = input.displayName ?? (row.display_name as string)
-    const topology = input.topology ?? (row.topology as TTopology) ?? "stream-aligned"
     const slackChannel = input.slackChannel !== undefined
       ? input.slackChannel
       : (row.slack_channel as string | null) ?? null
 
-    const batch = [
-      {
-        query: `UPDATE ${KEYSPACE}.teams
-                SET display_name = ?, topology = ?, slack_channel = ?, updated_at = ?
-                WHERE org_id = ? AND id = ?`,
-        params: [displayName, topology, slackChannel, now, orgId, teamId],
-      },
-      {
-        query: `UPDATE ${KEYSPACE}.teams_by_name
-                SET topology = ?
-                WHERE org_id = ? AND name = ?`,
-        params: [topology, orgId, row.name as string],
-      },
-    ]
-
-    await client.batch(batch, { prepare: true })
+    await client.execute(
+      `UPDATE ${KEYSPACE}.teams
+       SET display_name = ?, slack_channel = ?, updated_at = ?
+       WHERE org_id = ? AND id = ?`,
+      [displayName, slackChannel, now, orgId, teamId],
+      { prepare: true },
+    )
 
     return {
       id: teamId,
       orgId,
       name: row.name as string,
       displayName,
-      topology,
       slackChannel: slackChannel ?? undefined,
       createdAt: (row.created_at as Date).toISOString(),
       updatedAt: now,
@@ -130,7 +114,6 @@ export const createTeamRepo = (client: Client) => ({
       orgId: row.org_id,
       name: row.name,
       displayName: row.display_name,
-      topology: row.topology ?? "stream-aligned",
       slackChannel: row.slack_channel ?? undefined,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
@@ -161,7 +144,6 @@ export const createTeamRepo = (client: Client) => ({
       orgId: row.org_id,
       name: row.name,
       displayName: row.display_name,
-      topology: row.topology ?? "stream-aligned",
       slackChannel: row.slack_channel ?? undefined,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
@@ -180,7 +162,6 @@ export const createTeamRepo = (client: Client) => ({
       orgId: row.org_id,
       name: row.name,
       displayName: row.display_name,
-      topology: row.topology ?? "stream-aligned",
       slackChannel: row.slack_channel ?? undefined,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),

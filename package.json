@@ -17,7 +17,7 @@
     "url": "git+https://github.com/BloomerAB/gittan-api.git"
   },
   "dependencies": {
-    "@bloomerab/gittan-types": "^0.3.0",
+    "@bloomerab/gittan-types": "^0.4.0",
     "@bloomerab/npm-api-essentials": "^1.3.0",
     "cassandra-driver": "^4.7.2",
     "express": "^5.1.0",

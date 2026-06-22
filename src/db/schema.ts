@@ -50,7 +50,6 @@ export const CREATE_TABLES = [
     org_id text,
     name text,
     display_name text,
-    topology text,
     slack_channel text,
     created_at timestamp,
     updated_at timestamp,
@@ -61,7 +60,6 @@ export const CREATE_TABLES = [
     org_id text,
     name text,
     team_id text,
-    topology text,
     PRIMARY KEY (org_id, name)
   )`,
 
