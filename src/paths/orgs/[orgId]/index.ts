@@ -3,6 +3,7 @@ import { z } from "zod"
 
 import { assertOrgAccess, getAuthUser, param } from "../../../auth/helpers.js"
 import { deps } from "../../../deps.js"
+import { syncOidcProvider } from "../../../integrations/auth-server.js"
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
   if (!(await assertOrgAccess(req, res))) return
@@ -45,6 +46,16 @@ export const PUT = async (req: Request, res: Response): Promise<void> => {
   if (!org) {
     res.status(404).json({ error: "Organization not found" })
     return
+  }
+
+  if (org.oidcIssuer && org.oidcClientId && org.oidcClientSecret) {
+    await syncOidcProvider({
+      id: orgId,
+      issuer: org.oidcIssuer,
+      clientId: org.oidcClientId,
+      clientSecret: org.oidcClientSecret,
+      displayName: org.displayName,
+    })
   }
 
   const user = getAuthUser(req)
