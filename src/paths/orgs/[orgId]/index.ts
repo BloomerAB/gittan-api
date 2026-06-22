@@ -22,6 +22,10 @@ const UpdateOrgBody = z.object({
   displayName: z.string().min(1).max(128).optional(),
   oidcIssuer: z.string().url().nullable().optional(),
   oidcClientId: z.string().nullable().optional(),
+  slackClientId: z.string().nullable().optional(),
+  slackClientSecret: z.string().nullable().optional(),
+  slackBotToken: z.string().nullable().optional(),
+  slackTeamName: z.string().nullable().optional(),
 })
 
 export const PUT = async (req: Request, res: Response): Promise<void> => {
