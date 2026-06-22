@@ -83,6 +83,7 @@ const apiDoc: OpenAPIV3.Document = {
           plan: { type: "string", enum: ["starter", "team"] },
           oidcIssuer: { type: "string" },
           oidcClientId: { type: "string" },
+          oidcClientSecret: { type: "string" },
           slackClientId: { type: "string" },
           slackClientSecret: { type: "string" },
           slackBotToken: { type: "string" },

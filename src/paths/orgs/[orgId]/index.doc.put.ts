@@ -15,6 +15,7 @@ export const operation = {
             displayName: { type: "string", minLength: 1, maxLength: 128 },
             oidcIssuer: { type: "string", format: "uri", nullable: true },
             oidcClientId: { type: "string", nullable: true },
+            oidcClientSecret: { type: "string", nullable: true },
             slackClientId: { type: "string", nullable: true },
             slackClientSecret: { type: "string", nullable: true },
             slackBotToken: { type: "string", nullable: true },
