@@ -16,7 +16,8 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
     return
   }
 
-  res.json(org)
+  const { oidcClientSecret: _, ...safeOrg } = org
+  res.json(safeOrg)
 }
 
 const UpdateOrgBody = z.object({
