@@ -3,6 +3,7 @@ import type { NatsConnection } from "nats"
 
 import type { TConfig } from "./config/index.js"
 import type { TAuditRepo } from "./db/audit-repo.js"
+import type { TMemberRepo } from "./db/member-repo.js"
 import type { TOrgRepo } from "./db/org-repo.js"
 import type { TPolicyRepo } from "./db/policy-repo.js"
 import type { TRepoMetadataRepo } from "./db/repo-metadata.js"
@@ -16,6 +17,7 @@ export type TDeps = {
   readonly db: Client
   readonly nats: NatsConnection
   readonly orgRepo: TOrgRepo
+  readonly memberRepo: TMemberRepo
   readonly teamRepo: TTeamRepo
   readonly repoMetadata: TRepoMetadataRepo
   readonly usageRepo: TUsageRepo

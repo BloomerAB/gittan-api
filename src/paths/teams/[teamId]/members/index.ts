@@ -1,7 +1,7 @@
 import type { Request, Response } from "express"
 import { z } from "zod"
 
-import { getAuthUser, getUserOrgId, param } from "../../../../auth/helpers.js"
+import { getAuthUser, param } from "../../../../auth/helpers.js"
 import { deps } from "../../../../deps.js"
 import { KEYSPACE } from "../../../../db/schema.js"
 
@@ -13,23 +13,23 @@ const assertTeamInUserOrg = async (
   req: Request,
   res: Response,
 ): Promise<string | false> => {
-  const { db } = deps()
+  const { db, memberRepo } = deps()
   const user = getAuthUser(req)
   const teamId = param(req, "teamId")
-  const orgId = await getUserOrgId(user.id)
 
-  const result = await db.execute(
-    `SELECT id FROM ${KEYSPACE}.teams WHERE org_id = ? AND id = ?`,
-    [orgId, teamId],
-    { prepare: true },
-  )
+  const memberships = await memberRepo.getUserOrgIds(user.id)
 
-  if (result.rowLength === 0) {
-    res.status(403).json({ error: "Access denied to this team" })
-    return false
+  for (const m of memberships) {
+    const result = await db.execute(
+      `SELECT id FROM ${KEYSPACE}.teams WHERE org_id = ? AND id = ?`,
+      [m.orgId, teamId],
+      { prepare: true },
+    )
+    if (result.rowLength > 0) return m.orgId
   }
 
-  return orgId
+  res.status(403).json({ error: "Access denied to this team" })
+  return false
 }
 
 const resolveEmails = async (

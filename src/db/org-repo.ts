@@ -10,6 +10,7 @@ export type TOrg = {
   readonly oidcClientId?: string
   readonly oidcClientSecret?: string
   readonly mandatorySso: boolean
+  readonly ssoEmailDomain?: string
   readonly slackClientId?: string
   readonly slackClientSecret?: string
   readonly slackBotToken?: string
@@ -30,6 +31,7 @@ export type TUpdateOrgInput = {
   readonly oidcClientId?: string | null
   readonly oidcClientSecret?: string | null
   readonly mandatorySso?: boolean
+  readonly ssoEmailDomain?: string | null
   readonly slackClientId?: string | null
   readonly slackClientSecret?: string | null
   readonly slackBotToken?: string | null
@@ -44,6 +46,7 @@ const rowToOrg = (row: Record<string, unknown>): TOrg => ({
   oidcClientId: (row.oidc_client_id as string | null) ?? undefined,
   oidcClientSecret: (row.oidc_client_secret as string | null) ?? undefined,
   mandatorySso: (row.mandatory_sso as boolean | null) ?? false,
+  ssoEmailDomain: (row.sso_email_domain as string | null) ?? undefined,
   slackClientId: (row.slack_client_id as string | null) ?? undefined,
   slackClientSecret: (row.slack_client_secret as string | null) ?? undefined,
   slackBotToken: (row.slack_bot_token as string | null) ?? undefined,
@@ -121,6 +124,7 @@ export const createOrgRepo = (client: Client) => ({
     const oidcClientId = resolve("oidc_client_id", input.oidcClientId)
     const oidcClientSecret = resolve("oidc_client_secret", input.oidcClientSecret)
     const mandatorySso = input.mandatorySso !== undefined ? input.mandatorySso : ((row.mandatory_sso as boolean | null) ?? false)
+    const ssoEmailDomain = resolve("sso_email_domain", input.ssoEmailDomain)
     const slackClientId = resolve("slack_client_id", input.slackClientId)
     const slackClientSecret = resolve("slack_client_secret", input.slackClientSecret)
     const slackBotToken = resolve("slack_bot_token", input.slackBotToken)
@@ -129,10 +133,11 @@ export const createOrgRepo = (client: Client) => ({
     await client.execute(
       `UPDATE ${KEYSPACE}.orgs
        SET display_name = ?, oidc_issuer = ?, oidc_client_id = ?, oidc_client_secret = ?,
-           mandatory_sso = ?, slack_client_id = ?, slack_client_secret = ?, slack_bot_token = ?, slack_team_name = ?,
+           mandatory_sso = ?, sso_email_domain = ?,
+           slack_client_id = ?, slack_client_secret = ?, slack_bot_token = ?, slack_team_name = ?,
            updated_at = ?
        WHERE id = ?`,
-      [displayName, oidcIssuer, oidcClientId, oidcClientSecret, mandatorySso, slackClientId, slackClientSecret, slackBotToken, slackTeamName, now, id],
+      [displayName, oidcIssuer, oidcClientId, oidcClientSecret, mandatorySso, ssoEmailDomain, slackClientId, slackClientSecret, slackBotToken, slackTeamName, now, id],
       { prepare: true },
     )
 
@@ -144,6 +149,7 @@ export const createOrgRepo = (client: Client) => ({
       oidcClientId: oidcClientId ?? undefined,
       oidcClientSecret: oidcClientSecret ?? undefined,
       mandatorySso,
+      ssoEmailDomain: ssoEmailDomain ?? undefined,
       slackClientId: slackClientId ?? undefined,
       slackClientSecret: slackClientSecret ?? undefined,
       slackBotToken: slackBotToken ?? undefined,
@@ -151,6 +157,26 @@ export const createOrgRepo = (client: Client) => ({
       createdAt: (row.created_at as Date).toISOString(),
       updatedAt: now.toISOString(),
     }
+  },
+
+  getByName: async (name: string): Promise<TOrg | undefined> => {
+    const lookup = await client.execute(
+      `SELECT org_id FROM ${KEYSPACE}.orgs_by_name WHERE name = ?`,
+      [name],
+      { prepare: true },
+    )
+
+    if (lookup.rowLength === 0) return undefined
+
+    const orgId = lookup.first().org_id as string
+    const result = await client.execute(
+      `SELECT * FROM ${KEYSPACE}.orgs WHERE id = ?`,
+      [orgId],
+      { prepare: true },
+    )
+
+    if (result.rowLength === 0) return undefined
+    return rowToOrg(result.first())
   },
 
   getByUserId: async (userId: string): Promise<TOrg[]> => {

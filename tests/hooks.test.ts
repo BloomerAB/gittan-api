@@ -1,9 +1,18 @@
 import express from "express"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import type { TMemberRepo } from "../src/db/member-repo.js"
 import type { TRepoMetadataRepo } from "../src/db/repo-metadata.js"
 import { initDeps } from "../src/deps.js"
 import { POST } from "../src/paths/hooks/push.js"
+
+const createMockMemberRepo = (): TMemberRepo => ({
+  addMember: vi.fn(),
+  removeMember: vi.fn(),
+  getMembers: vi.fn(),
+  getUserOrgIds: vi.fn(),
+  getMembership: vi.fn(),
+})
 
 const createMockNats = () => ({
   publish: vi.fn(),
@@ -30,10 +39,14 @@ const stubDeps = (
       batch: vi.fn(),
     } as any,
     nats: nats as any,
+    orgRepo: {} as any,
+    memberRepo: createMockMemberRepo(),
     teamRepo: {} as any,
     repoMetadata,
     usageRepo: {} as any,
     stepRegistry: {} as any,
+    policyRepo: {} as any,
+    auditRepo: {} as any,
     forgejo: {} as any,
   })
 }

@@ -2,8 +2,6 @@ import type { Request, Response } from "express"
 
 import { deps } from "../deps.js"
 
-const PLATFORM_ORG_ID = "bloomer"
-
 export type TTokenUser = {
   readonly id: string
   readonly email: string
@@ -35,18 +33,6 @@ export const getAuthUser = (req: Request): TTokenUser => {
   }
 }
 
-export const getUserOrgId = async (userId: string): Promise<string> => {
-  const { db } = deps()
-  const result = await db.execute(
-    "SELECT org_id FROM gittan.users WHERE id = ?",
-    [userId],
-    { prepare: true },
-  )
-  return result.rowLength > 0
-    ? (result.first().org_id as string | null) ?? ""
-    : ""
-}
-
 export const assertOrgAccess = async (
   req: Request,
   res: Response,
@@ -57,9 +43,10 @@ export const assertOrgAccess = async (
 
   if (!requestedOrg) return true
 
-  const userOrgId = await getUserOrgId(user.id)
+  const { memberRepo } = deps()
+  const membership = await memberRepo.getMembership(requestedOrg, user.id)
 
-  if (userOrgId !== requestedOrg) {
+  if (!membership) {
     res.status(403).json({ error: "Access denied to this organization" })
     return false
   }
@@ -72,9 +59,12 @@ export const assertPlatformAdmin = async (
   res: Response,
 ): Promise<boolean> => {
   const user = getAuthUser(req)
-  const userOrgId = await getUserOrgId(user.id)
+  const { memberRepo } = deps()
 
-  if (userOrgId !== PLATFORM_ORG_ID) {
+  const memberships = await memberRepo.getUserOrgIds(user.id)
+  const isBloomerOwner = memberships.some((m) => m.orgId === "bloomer" || m.role === "owner")
+
+  if (!isBloomerOwner) {
     res.status(403).json({ error: "Platform admin access required" })
     return false
   }

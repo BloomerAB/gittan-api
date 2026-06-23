@@ -1,6 +1,7 @@
 import type { Request, Response } from "express"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import type { TMemberRepo } from "../src/db/member-repo.js"
 import {
   assertOrgAccess,
   assertPlatformAdmin,
@@ -9,20 +10,22 @@ import {
 } from "../src/auth/helpers.js"
 import { initDeps } from "../src/deps.js"
 
-const createMockDb = (orgId: string | null = null) => ({
-  execute: vi.fn().mockResolvedValue({
-    rowLength: orgId ? 1 : 0,
-    first: () => ({ org_id: orgId }),
-  }),
-  batch: vi.fn(),
+const createMockMemberRepo = (overrides: Partial<TMemberRepo> = {}): TMemberRepo => ({
+  addMember: vi.fn(),
+  removeMember: vi.fn(),
+  getMembers: vi.fn(),
+  getUserOrgIds: vi.fn().mockResolvedValue([]),
+  getMembership: vi.fn().mockResolvedValue(undefined),
+  ...overrides,
 })
 
-const stubDeps = (orgId: string | null = null) => {
+const stubDeps = (memberRepo?: TMemberRepo) => {
   initDeps({
     config: {} as any,
-    db: createMockDb(orgId) as any,
+    db: { execute: vi.fn(), batch: vi.fn() } as any,
     nats: {} as any,
     orgRepo: {} as any,
+    memberRepo: memberRepo ?? createMockMemberRepo(),
     teamRepo: {} as any,
     repoMetadata: {} as any,
     usageRepo: {} as any,
@@ -112,9 +115,13 @@ describe("getAuthUser()", () => {
 })
 
 describe("assertOrgAccess()", () => {
-  beforeEach(() => stubDeps("org-1"))
+  beforeEach(() => {
+    stubDeps(createMockMemberRepo({
+      getMembership: vi.fn().mockResolvedValue({ orgId: "org-1", userId: "u1", role: "owner", joinedAt: new Date().toISOString() }),
+    }))
+  })
 
-  it("returns true when user org matches request org", async () => {
+  it("returns true when user is a member of requested org", async () => {
     const { req, res } = createMockReqRes(
       { id: "u1", email: "m@test.com", role: "member" },
       { orgId: "org-1" },
@@ -122,8 +129,10 @@ describe("assertOrgAccess()", () => {
     expect(await assertOrgAccess(req, res)).toBe(true)
   })
 
-  it("returns false and 403 when org mismatch", async () => {
-    stubDeps("org-2")
+  it("returns false and 403 when user is not a member of requested org", async () => {
+    stubDeps(createMockMemberRepo({
+      getMembership: vi.fn().mockResolvedValue(undefined),
+    }))
     const { req, res, getStatus, getBody } = createMockReqRes(
       { id: "u1", email: "m@test.com", role: "member" },
       { orgId: "org-1" },
@@ -142,7 +151,9 @@ describe("assertOrgAccess()", () => {
   })
 
   it("uses custom paramName", async () => {
-    stubDeps("org-1")
+    stubDeps(createMockMemberRepo({
+      getMembership: vi.fn().mockResolvedValue(undefined),
+    }))
     const { req, res, getStatus } = createMockReqRes(
       { id: "u1", email: "m@test.com", role: "member" },
       { customOrg: "org-2" },
@@ -151,8 +162,10 @@ describe("assertOrgAccess()", () => {
     expect(getStatus()).toBe(403)
   })
 
-  it("returns false when user has no org", async () => {
-    stubDeps(null)
+  it("returns false when user has no membership", async () => {
+    stubDeps(createMockMemberRepo({
+      getMembership: vi.fn().mockResolvedValue(undefined),
+    }))
     const { req, res, getStatus } = createMockReqRes(
       { id: "u1", email: "m@test.com", role: "member" },
       { orgId: "org-1" },
@@ -163,8 +176,10 @@ describe("assertOrgAccess()", () => {
 })
 
 describe("assertPlatformAdmin()", () => {
-  it("returns true for bloomer org", async () => {
-    stubDeps("bloomer")
+  it("returns true for bloomer org member", async () => {
+    stubDeps(createMockMemberRepo({
+      getUserOrgIds: vi.fn().mockResolvedValue([{ orgId: "bloomer", role: "owner" }]),
+    }))
     const { req, res } = createMockReqRes({
       id: "u1",
       email: "admin@bloomer.se",
@@ -174,7 +189,9 @@ describe("assertPlatformAdmin()", () => {
   })
 
   it("returns false and 403 for non-platform org", async () => {
-    stubDeps("customer-org")
+    stubDeps(createMockMemberRepo({
+      getUserOrgIds: vi.fn().mockResolvedValue([{ orgId: "customer-org", role: "member" }]),
+    }))
     const { req, res, getStatus, getBody } = createMockReqRes({
       id: "u1",
       email: "m@test.com",

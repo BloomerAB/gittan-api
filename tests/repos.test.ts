@@ -1,6 +1,7 @@
 import express from "express"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import type { TMemberRepo } from "../src/db/member-repo.js"
 import type { TRepoMetadataRepo } from "../src/db/repo-metadata.js"
 import type { TTeamRepo } from "../src/db/team-repo.js"
 import type { TForgejoClient } from "../src/integrations/forgejo.js"
@@ -8,6 +9,14 @@ import { initDeps } from "../src/deps.js"
 import { POST } from "../src/paths/orgs/[orgId]/repos/index.js"
 import { GET as GET_REPO } from "../src/paths/orgs/[orgId]/repos/[repoId].js"
 import { GET as GET_TEAM_REPOS } from "../src/paths/teams/[teamId]/repos.js"
+
+const createMockMemberRepo = (): TMemberRepo => ({
+  addMember: vi.fn(),
+  removeMember: vi.fn(),
+  getMembers: vi.fn(),
+  getUserOrgIds: vi.fn(),
+  getMembership: vi.fn().mockResolvedValue({ orgId: "org-1", userId: "test-user", role: "owner", joinedAt: new Date().toISOString() }),
+})
 
 const createMockForgejoClient = (): TForgejoClient => ({
   createOrg: vi.fn(),
@@ -82,10 +91,14 @@ describe("repo routes", () => {
         batch: vi.fn(),
       } as any,
       nats: {} as any,
+      orgRepo: {} as any,
+      memberRepo: createMockMemberRepo(),
       teamRepo,
       repoMetadata,
       usageRepo: {} as any,
       stepRegistry: {} as any,
+      policyRepo: {} as any,
+      auditRepo: {} as any,
       forgejo,
     })
     app = express()

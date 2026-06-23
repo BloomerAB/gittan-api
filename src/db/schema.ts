@@ -38,6 +38,7 @@ export const CREATE_TABLES = [
     oidc_client_id text,
     oidc_client_secret text,
     mandatory_sso boolean,
+    sso_email_domain text,
     slack_client_id text,
     slack_client_secret text,
     slack_bot_token text,
@@ -216,6 +217,22 @@ export const CREATE_TABLES = [
     created_at timestamp,
     updated_at timestamp,
     PRIMARY KEY (org_id, id)
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.org_members (
+    org_id text,
+    user_id text,
+    role text,
+    joined_at timestamp,
+    PRIMARY KEY (org_id, user_id)
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.user_orgs (
+    user_id text,
+    org_id text,
+    role text,
+    joined_at timestamp,
+    PRIMARY KEY (user_id, org_id)
   )`,
 
   `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.audit_log (

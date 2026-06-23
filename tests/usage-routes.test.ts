@@ -1,11 +1,20 @@
 import express from "express"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import type { TMemberRepo } from "../src/db/member-repo.js"
 import type { TUsageRepo } from "../src/db/usage-repo.js"
 import { initDeps } from "../src/deps.js"
 import { GET as GET_PLAN, PUT as PUT_PLAN } from "../src/paths/orgs/[orgId]/plan.js"
 import { GET as GET_USAGE } from "../src/paths/orgs/[orgId]/usage/index.js"
 import { GET as GET_HISTORY } from "../src/paths/orgs/[orgId]/usage/history.js"
+
+const createMockMemberRepo = (): TMemberRepo => ({
+  addMember: vi.fn(),
+  removeMember: vi.fn(),
+  getMembers: vi.fn(),
+  getUserOrgIds: vi.fn(),
+  getMembership: vi.fn().mockResolvedValue({ orgId: "org-1", userId: "test-user", role: "owner", joinedAt: new Date().toISOString() }),
+})
 
 const createMockUsageRepo = (overrides: Partial<TUsageRepo> = {}): TUsageRepo => ({
   getPlan: vi.fn().mockResolvedValue(undefined),
@@ -31,10 +40,14 @@ const stubDeps = (usageRepo: TUsageRepo) => {
     config: {} as any,
     db: mockDb,
     nats: {} as any,
+    orgRepo: {} as any,
+    memberRepo: createMockMemberRepo(),
     teamRepo: {} as any,
     repoMetadata: {} as any,
     usageRepo,
     stepRegistry: {} as any,
+    policyRepo: {} as any,
+    auditRepo: {} as any,
     forgejo: {} as any,
   })
 }

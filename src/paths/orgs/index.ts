@@ -27,7 +27,7 @@ const CreateOrgBody = z.object({
 
 export const POST = async (req: Request, res: Response): Promise<void> => {
   const user = getAuthUser(req)
-  const { orgRepo, db } = deps()
+  const { orgRepo, memberRepo, db } = deps()
 
   const parsed = CreateOrgBody.safeParse(req.body)
   if (!parsed.success) {
@@ -48,6 +48,8 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
       name,
       displayName: parsed.data.displayName,
     })
+
+    await memberRepo.addMember(org.id, user.id, "owner")
 
     await db.batch(
       [

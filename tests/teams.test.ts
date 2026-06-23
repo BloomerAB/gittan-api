@@ -2,6 +2,7 @@ import express from "express"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { TAuditRepo } from "../src/db/audit-repo.js"
+import type { TMemberRepo } from "../src/db/member-repo.js"
 import type { TTeamRepo } from "../src/db/team-repo.js"
 import { initDeps } from "../src/deps.js"
 import { GET, POST } from "../src/paths/orgs/[orgId]/teams/index.js"
@@ -10,6 +11,14 @@ import { GET as GET_MEMBERS, POST as POST_MEMBER } from "../src/paths/teams/[tea
 import { DELETE as DELETE_MEMBER } from "../src/paths/teams/[teamId]/members/[userId].js"
 
 const TEST_ORG = "org-1"
+
+const createMockMemberRepo = (): TMemberRepo => ({
+  addMember: vi.fn(),
+  removeMember: vi.fn(),
+  getMembers: vi.fn(),
+  getUserOrgIds: vi.fn().mockResolvedValue([{ orgId: TEST_ORG, role: "owner" }]),
+  getMembership: vi.fn().mockResolvedValue({ orgId: TEST_ORG, userId: "test-user", role: "owner", joinedAt: new Date().toISOString() }),
+})
 
 const createMockTeamRepo = (): TTeamRepo => ({
   createTeam: vi.fn(),
@@ -51,6 +60,7 @@ const stubDeps = (teamRepo: TTeamRepo, auditRepo: TAuditRepo, db?: any) => {
     db: db ?? createMockDb(),
     nats: {} as any,
     orgRepo: {} as any,
+    memberRepo: createMockMemberRepo(),
     teamRepo,
     repoMetadata: {} as any,
     usageRepo: {} as any,

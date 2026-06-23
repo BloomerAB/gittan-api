@@ -5,21 +5,33 @@ import { deps } from "../../../deps.js"
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
   const user = getAuthUser(req)
-  const { orgRepo } = deps()
+  const { orgRepo, memberRepo } = deps()
 
-  const orgs = await orgRepo.getByUserId(user.id)
+  const memberships = await memberRepo.getUserOrgIds(user.id)
 
-  const result = orgs.map((org) => ({
-    id: org.id,
-    name: org.name,
-    displayName: org.displayName,
-    role: "owner",
-    plan: "starter",
-    oidcIssuer: org.oidcIssuer,
-    mandatorySso: org.mandatorySso,
-    createdAt: org.createdAt,
-    updatedAt: org.updatedAt,
-  }))
+  if (memberships.length === 0) {
+    res.json([])
+    return
+  }
 
-  res.json(result)
+  const orgs = await Promise.all(
+    memberships.map(async (m) => {
+      const org = await orgRepo.getById(m.orgId)
+      if (!org) return null
+      return {
+        id: org.id,
+        name: org.name,
+        displayName: org.displayName,
+        role: m.role,
+        plan: "starter" as const,
+        oidcIssuer: org.oidcIssuer,
+        mandatorySso: org.mandatorySso,
+        ssoEmailDomain: org.ssoEmailDomain,
+        createdAt: org.createdAt,
+        updatedAt: org.updatedAt,
+      }
+    }),
+  )
+
+  res.json(orgs.filter(Boolean))
 }
