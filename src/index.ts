@@ -39,7 +39,7 @@ const backfillOrgMembers = async (scylla: ScyllaClient): Promise<void> => {
 
     // Always ensure users_by_org is populated
     await scylla.execute(
-      `INSERT INTO ${KEYSPACE}.users_by_org (org_id, user_id, email, name) VALUES (?, ?, ?, ?) IF NOT EXISTS`,
+      `INSERT INTO ${KEYSPACE}.users_by_org (org_id, user_id, email, name) VALUES (?, ?, ?, ?)`,
       [orgId, userId, email, name],
       { prepare: true },
     )
