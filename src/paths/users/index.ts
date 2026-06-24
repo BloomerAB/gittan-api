@@ -11,6 +11,51 @@ const CreateUserBody = z.object({
   name: z.string().min(1).max(128),
 })
 
+const slugify = (input: string): string =>
+  input
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+
+const createPersonalOrg = async (userId: string, email: string, name: string): Promise<string> => {
+  const { orgRepo, memberRepo, db } = deps()
+
+  const slug = slugify(name) || slugify(email.split("@")[0]) || `user-${userId.slice(0, 8)}`
+
+  let orgName = slug
+  const existing = await orgRepo.getByName(orgName)
+  if (existing) {
+    orgName = `${slug}-${userId.slice(0, 8)}`
+  }
+
+  const orgId = randomUUID()
+  const org = await orgRepo.create({
+    id: orgId,
+    name: orgName,
+    displayName: name,
+  })
+
+  await memberRepo.addMember(org.id, userId, "owner")
+
+  await db.batch(
+    [
+      {
+        query: `UPDATE ${KEYSPACE}.users SET org_id = ?, role = ? WHERE id = ?`,
+        params: [org.id, "org-admin", userId],
+      },
+      {
+        query: `INSERT INTO ${KEYSPACE}.users_by_org (org_id, user_id, email, name) VALUES (?, ?, ?, ?)`,
+        params: [org.id, userId, email, name],
+      },
+    ],
+    { prepare: true },
+  )
+
+  return org.id
+}
+
 export const POST = async (req: Request, res: Response): Promise<void> => {
   const { db } = deps()
   const parsed = CreateUserBody.safeParse(req.body)
@@ -54,9 +99,16 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
     { prepare: true },
   )
 
+  let orgId = ""
+  try {
+    orgId = await createPersonalOrg(id, email, name)
+  } catch (err) {
+    console.error("Failed to create personal org for new user:", err)
+  }
+
   res.status(201).json({
     id,
-    company_id: "",
+    company_id: orgId,
     email,
     name,
     role: "admin",
