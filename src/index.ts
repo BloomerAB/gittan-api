@@ -34,6 +34,16 @@ const backfillOrgMembers = async (scylla: ScyllaClient): Promise<void> => {
       { prepare: true },
     )
 
+    const email = row.email as string
+    const name = (row.get("name") as string) ?? ""
+
+    // Always ensure users_by_org is populated
+    await scylla.execute(
+      `INSERT INTO ${KEYSPACE}.users_by_org (org_id, user_id, email, name) VALUES (?, ?, ?, ?) IF NOT EXISTS`,
+      [orgId, userId, email, name],
+      { prepare: true },
+    )
+
     if (existing.rowLength > 0) continue
 
     const role = (row.role as string) === "admin" ? "owner" : "member"
