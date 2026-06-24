@@ -135,13 +135,15 @@ describe("GET /orgs/:orgId/members", () => {
       { orgId: TEST_ORG, userId: "u1", role: "owner", joinedAt: "2026-01-01T00:00:00Z" },
       { orgId: TEST_ORG, userId: "u2", role: "member", joinedAt: "2026-02-01T00:00:00Z" },
     ])
-    mockDb.execute.mockResolvedValue({
-      rows: [
-        { user_id: "u1", email: "alice@test.com", name: "Alice" },
-        { user_id: "u2", email: "bob@test.com", name: "Bob" },
-      ],
-      rowLength: 2,
-      first: () => ({}),
+    mockDb.execute.mockImplementation(async (_q: string, params?: unknown[]) => {
+      const id = params?.[0] as string
+      const users: Record<string, { id: string; email: string }> = {
+        u1: { id: "u1", email: "alice@test.com" },
+        u2: { id: "u2", email: "bob@test.com" },
+      }
+      const user = users[id]
+      if (!user) return { rows: [], rowLength: 0, first: () => ({}) }
+      return { rows: [user], rowLength: 1, first: () => user }
     })
 
     const { status, body } = await request(app, "GET", `/orgs/${TEST_ORG}/members`)
@@ -151,7 +153,6 @@ describe("GET /orgs/:orgId/members", () => {
     expect(body[0]).toEqual({
       userId: "u1",
       email: "alice@test.com",
-      name: "Alice",
       role: "owner",
       joinedAt: "2026-01-01T00:00:00Z",
     })

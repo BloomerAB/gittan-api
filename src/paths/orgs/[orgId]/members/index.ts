@@ -16,29 +16,29 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
     return
   }
 
-  const userRows = await db.execute(
-    `SELECT user_id, email, name FROM ${KEYSPACE}.users_by_org WHERE org_id = ?`,
-    [orgId],
-    { prepare: true },
+  const userIds = members.map((m) => m.userId)
+  const userRows = await Promise.all(
+    userIds.map((id) =>
+      db.execute(
+        `SELECT id, email FROM ${KEYSPACE}.users WHERE id = ?`,
+        [id],
+        { prepare: true },
+      ),
+    ),
   )
 
   const userMap = new Map(
-    userRows.rows.map((row) => [
-      row.user_id as string,
-      { email: row.email as string, name: row.name as string },
-    ]),
+    userRows
+      .filter((r) => r.rowLength > 0)
+      .map((r) => [r.first().id as string, r.first().email as string]),
   )
 
-  const enriched = members.map((m) => {
-    const user = userMap.get(m.userId)
-    return {
-      userId: m.userId,
-      email: user?.email ?? "",
-      name: user?.name ?? "",
-      role: m.role,
-      joinedAt: m.joinedAt,
-    }
-  })
+  const enriched = members.map((m) => ({
+    userId: m.userId,
+    email: userMap.get(m.userId) ?? "",
+    role: m.role,
+    joinedAt: m.joinedAt,
+  }))
 
   res.json(enriched)
 }
