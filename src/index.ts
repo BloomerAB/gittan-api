@@ -3,6 +3,7 @@ import { connect as natsConnect } from "nats"
 
 import { loadConfig } from "./config/index.js"
 import { createAuditRepo } from "./db/audit-repo.js"
+import { createInviteRepo } from "./db/invite-repo.js"
 import { initializeSchema } from "./db/client.js"
 import { createMemberRepo } from "./db/member-repo.js"
 import { createOrgRepo } from "./db/org-repo.js"
@@ -37,6 +38,7 @@ const main = async (): Promise<void> => {
   const stepRegistry = createStepRegistry(scylla)
   const policyRepo = createPolicyRepo(scylla)
   const auditRepo = createAuditRepo(scylla)
+  const inviteRepo = createInviteRepo(scylla)
   const forgejo = createForgejoClient(config)
 
   initDeps({
@@ -51,6 +53,7 @@ const main = async (): Promise<void> => {
     stepRegistry,
     policyRepo,
     auditRepo,
+    inviteRepo,
     forgejo,
   })
 

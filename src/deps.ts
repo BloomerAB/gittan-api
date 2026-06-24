@@ -3,6 +3,7 @@ import type { NatsConnection } from "nats"
 
 import type { TConfig } from "./config/index.js"
 import type { TAuditRepo } from "./db/audit-repo.js"
+import type { TInviteRepo } from "./db/invite-repo.js"
 import type { TMemberRepo } from "./db/member-repo.js"
 import type { TOrgRepo } from "./db/org-repo.js"
 import type { TPolicyRepo } from "./db/policy-repo.js"
@@ -24,6 +25,7 @@ export type TDeps = {
   readonly stepRegistry: TStepRegistry
   readonly policyRepo: TPolicyRepo
   readonly auditRepo: TAuditRepo
+  readonly inviteRepo: TInviteRepo
   readonly forgejo: TForgejoClient
 }
 

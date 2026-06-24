@@ -235,6 +235,24 @@ export const CREATE_TABLES = [
     PRIMARY KEY (user_id, org_id)
   )`,
 
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.org_invites (
+    org_id text,
+    id text,
+    email text,
+    role text,
+    token text,
+    invited_by text,
+    created_at timestamp,
+    expires_at timestamp,
+    PRIMARY KEY (org_id, id)
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.invites_by_token (
+    token text PRIMARY KEY,
+    invite_id text,
+    org_id text
+  )`,
+
   `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.audit_log (
     org_id text,
     id timeuuid,
