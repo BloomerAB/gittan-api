@@ -11,31 +11,14 @@ const CreateUserBody = z.object({
   name: z.string().min(1).max(128),
 })
 
-const slugify = (input: string): string =>
-  input
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-
 const createPersonalOrg = async (userId: string, email: string): Promise<string> => {
   const { orgRepo, memberRepo, db } = deps()
-
-  const localPart = email.split("@")[0]
-  const slug = slugify(localPart) || `user-${userId.slice(0, 8)}`
-
-  let orgName = slug
-  const existing = await orgRepo.getByName(orgName)
-  if (existing) {
-    orgName = `${slug}-${userId.slice(0, 8)}`
-  }
 
   const orgId = randomUUID()
   const org = await orgRepo.create({
     id: orgId,
-    name: orgName,
-    displayName: localPart,
+    name: orgId,
+    displayName: email.split("@")[0],
   })
 
   await memberRepo.addMember(org.id, userId, "owner")
