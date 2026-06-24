@@ -30,8 +30,8 @@ const rowToInvite = (row: Record<string, unknown>): TInvite => ({
   id: row.id as string,
   orgId: row.org_id as string,
   email: row.email as string,
-  role: (row.role as TInvite["role"]) ?? "member",
-  token: row.token as string,
+  role: (row.invite_role as TInvite["role"]) ?? "member",
+  token: row.invite_token as string,
   invitedBy: row.invited_by as string,
   createdAt: (row.created_at as Date).toISOString(),
   expiresAt: (row.expires_at as Date).toISOString(),
@@ -46,11 +46,11 @@ export const createInviteRepo = (client: Client) => ({
     await client.batch(
       [
         {
-          query: `INSERT INTO ${KEYSPACE}.org_invites (id, org_id, email, role, token, invited_by, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          query: `INSERT INTO ${KEYSPACE}.org_invites (id, org_id, email, invite_role, invite_token, invited_by, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           params: [input.id, input.orgId, input.email, input.role, token, input.invitedBy, now, expiresAt],
         },
         {
-          query: `INSERT INTO ${KEYSPACE}.invites_by_token (token, invite_id, org_id) VALUES (?, ?, ?)`,
+          query: `INSERT INTO ${KEYSPACE}.invites_by_token (invite_token, invite_id, org_id) VALUES (?, ?, ?)`,
           params: [token, input.id, input.orgId],
         },
       ],
@@ -83,7 +83,7 @@ export const createInviteRepo = (client: Client) => ({
 
   getByToken: async (token: string): Promise<TInvite | undefined> => {
     const lookup = await client.execute(
-      `SELECT invite_id, org_id FROM ${KEYSPACE}.invites_by_token WHERE token = ?`,
+      `SELECT invite_id, org_id FROM ${KEYSPACE}.invites_by_token WHERE invite_token = ?`,
       [token],
       { prepare: true },
     )
@@ -110,12 +110,12 @@ export const createInviteRepo = (client: Client) => ({
 
   delete: async (orgId: string, id: string): Promise<void> => {
     const result = await client.execute(
-      `SELECT token FROM ${KEYSPACE}.org_invites WHERE org_id = ? AND id = ?`,
+      `SELECT invite_token FROM ${KEYSPACE}.org_invites WHERE org_id = ? AND id = ?`,
       [orgId, id],
       { prepare: true },
     )
 
-    const token = result.rowLength > 0 ? (result.first().token as string) : undefined
+    const token = result.rowLength > 0 ? (result.first().invite_token as string) : undefined
 
     const queries = [
       {
@@ -126,7 +126,7 @@ export const createInviteRepo = (client: Client) => ({
 
     if (token) {
       queries.push({
-        query: `DELETE FROM ${KEYSPACE}.invites_by_token WHERE token = ?`,
+        query: `DELETE FROM ${KEYSPACE}.invites_by_token WHERE invite_token = ?`,
         params: [token],
       })
     }

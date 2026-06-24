@@ -15,7 +15,47 @@ import { createUsageRepo } from "./db/usage-repo.js"
 import { initDeps } from "./deps.js"
 import { createForgejoClient } from "./integrations/forgejo.js"
 import { startUsageSubscriber } from "./pipeline/usage-subscriber.js"
+import { KEYSPACE } from "./db/schema.js"
 import { createServer } from "./server.js"
+
+const backfillOrgMembers = async (scylla: ScyllaClient): Promise<void> => {
+  const users = await scylla.execute(
+    `SELECT id, email, org_id, role FROM ${KEYSPACE}.users`,
+  )
+
+  for (const row of users.rows) {
+    const userId = row.id as string
+    const orgId = row.org_id as string | null
+    if (!orgId) continue
+
+    const existing = await scylla.execute(
+      `SELECT user_id FROM ${KEYSPACE}.org_members WHERE org_id = ? AND user_id = ?`,
+      [orgId, userId],
+      { prepare: true },
+    )
+
+    if (existing.rowLength > 0) continue
+
+    const role = (row.role as string) === "admin" ? "owner" : "member"
+    const now = new Date()
+
+    await scylla.batch(
+      [
+        {
+          query: `INSERT INTO ${KEYSPACE}.org_members (org_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)`,
+          params: [orgId, userId, role, now],
+        },
+        {
+          query: `INSERT INTO ${KEYSPACE}.user_orgs (user_id, org_id, role, joined_at) VALUES (?, ?, ?, ?)`,
+          params: [userId, orgId, role, now],
+        },
+      ],
+      { prepare: true },
+    )
+
+    console.log(`Backfilled org_members: ${userId} → ${orgId} (${role})`)
+  }
+}
 
 const main = async (): Promise<void> => {
   const config = loadConfig()
@@ -56,6 +96,8 @@ const main = async (): Promise<void> => {
     inviteRepo,
     forgejo,
   })
+
+  await backfillOrgMembers(scylla)
 
   startUsageSubscriber({ nats, usageRepo })
 
