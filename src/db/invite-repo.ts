@@ -8,7 +8,7 @@ export type TInvite = {
   readonly id: string
   readonly orgId: string
   readonly email: string
-  readonly role: "admin" | "member"
+  readonly role: "owner" | "member"
   readonly token: string
   readonly invitedBy: string
   readonly createdAt: string
@@ -19,7 +19,7 @@ export type TCreateInviteInput = {
   readonly id: string
   readonly orgId: string
   readonly email: string
-  readonly role: "admin" | "member"
+  readonly role: "owner" | "member"
   readonly invitedBy: string
   readonly expiresInDays?: number
 }

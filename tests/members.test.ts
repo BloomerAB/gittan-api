@@ -76,7 +76,7 @@ const stubDeps = (overrides: {
 }
 
 const injectUser = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
-  ;(req as any).user = { id: TEST_USER_ID, email: "owner@test.com", role: "admin" }
+  ;(req as any).user = { id: TEST_USER_ID, email: "owner@test.com", role: "owner" }
   next()
 }
 
@@ -213,7 +213,7 @@ describe("DELETE /orgs/:orgId/members/:userId", () => {
     expect(memberRepo.removeMember).not.toHaveBeenCalled()
   })
 
-  it("returns 403 for non-admin", async () => {
+  it("returns 403 for non-owner", async () => {
     vi.mocked(memberRepo.getMembership)
       .mockResolvedValueOnce({ orgId: TEST_ORG, userId: TEST_USER_ID, role: "member", joinedAt: "" }) // assertOrgAccess
       .mockResolvedValueOnce({ orgId: TEST_ORG, userId: TEST_USER_ID, role: "member", joinedAt: "" }) // role check
@@ -286,7 +286,7 @@ describe("POST /orgs/:orgId/invites", () => {
     expect(inviteRepo.create).not.toHaveBeenCalled()
   })
 
-  it("rejects non-admin users", async () => {
+  it("rejects non-owner users", async () => {
     vi.mocked(memberRepo.getMembership).mockResolvedValue({ orgId: TEST_ORG, userId: TEST_USER_ID, role: "member", joinedAt: "" })
 
     const { status } = await request(app, "POST", `/orgs/${TEST_ORG}/invites`, {
@@ -327,7 +327,7 @@ describe("DELETE /orgs/:orgId/invites/:id", () => {
     expect(inviteRepo.delete).toHaveBeenCalledWith(TEST_ORG, "inv-1")
   })
 
-  it("rejects non-admin users", async () => {
+  it("rejects non-owner users", async () => {
     const inviteRepo = createMockInviteRepo()
     const memberRepo = createMockMemberRepo()
     vi.mocked(memberRepo.getMembership).mockResolvedValue({ orgId: TEST_ORG, userId: TEST_USER_ID, role: "member", joinedAt: "" })

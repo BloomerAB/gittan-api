@@ -8,7 +8,7 @@ import { deps } from "../../../../deps.js"
 
 const CreateInviteBody = z.object({
   email: z.string().email(),
-  role: z.enum(["admin", "member"]).default("member"),
+  role: z.enum(["owner", "member"]).default("member"),
 })
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
@@ -39,8 +39,8 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
   const orgId = param(req, "orgId")
 
   const membership = await memberRepo.getMembership(orgId, user.id)
-  if (!membership || (membership.role !== "owner" && membership.role !== "admin")) {
-    res.status(403).json({ error: "Only org owners and admins can invite members" })
+  if (!membership || membership.role !== "owner") {
+    res.status(403).json({ error: "Only org owners can invite members" })
     return
   }
 

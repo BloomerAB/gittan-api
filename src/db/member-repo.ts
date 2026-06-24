@@ -5,7 +5,7 @@ import { KEYSPACE } from "./schema.js"
 export type TOrgMembership = {
   readonly orgId: string
   readonly userId: string
-  readonly role: "owner" | "admin" | "member"
+  readonly role: "owner" | "member"
   readonly joinedAt: string
 }
 

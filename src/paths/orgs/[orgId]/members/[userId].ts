@@ -13,8 +13,8 @@ export const DELETE = async (req: Request, res: Response): Promise<void> => {
   const userId = param(req, "userId")
 
   const membership = await memberRepo.getMembership(orgId, user.id)
-  if (!membership || (membership.role !== "owner" && membership.role !== "admin")) {
-    res.status(403).json({ error: "Only org owners and admins can remove members" })
+  if (!membership || membership.role !== "owner") {
+    res.status(403).json({ error: "Only org owners can remove members" })
     return
   }
 

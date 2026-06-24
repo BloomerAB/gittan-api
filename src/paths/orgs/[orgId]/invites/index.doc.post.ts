@@ -14,7 +14,7 @@ export const operation = {
           required: ["email"],
           properties: {
             email: { type: "string", format: "email" },
-            role: { type: "string", enum: ["admin", "member"], default: "member" },
+            role: { type: "string", enum: ["owner", "member"], default: "member" },
           },
         },
       },

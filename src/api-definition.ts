@@ -79,7 +79,7 @@ const apiDoc: OpenAPIV3.Document = {
           id: { type: "string", format: "uuid" },
           name: { type: "string" },
           displayName: { type: "string" },
-          role: { type: "string", enum: ["owner", "admin", "member"] },
+          role: { type: "string", enum: ["owner", "member"] },
           plan: { type: "string", enum: ["starter", "team"] },
           oidcIssuer: { type: "string" },
           oidcClientId: { type: "string" },
