@@ -20,7 +20,7 @@ import { createServer } from "./server.js"
 
 const backfillOrgMembers = async (scylla: ScyllaClient): Promise<void> => {
   const users = await scylla.execute(
-    `SELECT id, email, org_id, role FROM ${KEYSPACE}.users`,
+    `SELECT id, email, name, org_id, role FROM ${KEYSPACE}.users`,
   )
 
   for (const row of users.rows) {
