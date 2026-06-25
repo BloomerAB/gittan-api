@@ -23,7 +23,8 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
 
   const pdf = await generateReceiptPdf(receipt, orgName)
 
+  const safeId = receipt.id.replace(/[^a-zA-Z0-9_-]/g, "")
   res.setHeader("Content-Type", "application/pdf")
-  res.setHeader("Content-Disposition", `attachment; filename="gittan-receipt-${receipt.id}.pdf"`)
+  res.setHeader("Content-Disposition", `attachment; filename="gittan-receipt-${safeId}.pdf"`)
   res.send(pdf)
 }

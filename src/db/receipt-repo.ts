@@ -1,4 +1,5 @@
 import type { Client } from "cassandra-driver"
+import { z } from "zod"
 
 import { KEYSPACE } from "./schema.js"
 
@@ -18,25 +19,28 @@ export type TReceiptRow = {
   readonly createdAt: string
 }
 
+const CreateReceiptSchema = z.object({
+  orgId: z.string().min(1),
+  id: z.string().regex(/^[a-zA-Z0-9_-]+$/),
+  month: z.string().regex(/^\d{4}-\d{2}$/),
+  amountEur: z.number().int().min(0),
+  plan: z.enum(["personal", "starter", "team"]),
+  description: z.string().min(1),
+  items: z.array(z.object({ label: z.string(), amount: z.number() })).min(1),
+})
+
 export const createReceiptRepo = (client: Client) => ({
-  create: async (input: {
-    readonly orgId: string
-    readonly id: string
-    readonly month: string
-    readonly amountEur: number
-    readonly plan: string
-    readonly description: string
-    readonly items: ReadonlyArray<TReceiptItem>
-  }): Promise<TReceiptRow> => {
+  create: async (input: z.infer<typeof CreateReceiptSchema>): Promise<TReceiptRow> => {
+    const validated = CreateReceiptSchema.parse(input)
     const now = new Date().toISOString()
 
     await client.execute(
       `INSERT INTO ${KEYSPACE}.receipts (org_id, id, month, amount_eur, plan, description, items, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [input.orgId, input.id, input.month, input.amountEur, input.plan, input.description, JSON.stringify(input.items), now],
+      [validated.orgId, validated.id, validated.month, validated.amountEur, validated.plan, validated.description, JSON.stringify(validated.items), now],
       { prepare: true },
     )
 
-    return { ...input, createdAt: now }
+    return { ...validated, createdAt: now }
   },
 
   list: async (orgId: string): Promise<ReadonlyArray<TReceiptRow>> => {
@@ -61,6 +65,15 @@ export const createReceiptRepo = (client: Client) => ({
   },
 })
 
+const parseItems = (raw: unknown): ReadonlyArray<TReceiptItem> => {
+  try {
+    const parsed = JSON.parse((raw as string) ?? "[]")
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
 const rowToReceipt = (row: Record<string, unknown>): TReceiptRow => ({
   orgId: row.org_id as string,
   id: row.id as string,
@@ -68,7 +81,7 @@ const rowToReceipt = (row: Record<string, unknown>): TReceiptRow => ({
   amountEur: (row.amount_eur as number) ?? 0,
   plan: row.plan as string,
   description: row.description as string,
-  items: JSON.parse((row.items as string) ?? "[]") as ReadonlyArray<TReceiptItem>,
+  items: parseItems(row.items),
   createdAt: (row.created_at as Date).toISOString(),
 })
 
