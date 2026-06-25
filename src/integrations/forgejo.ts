@@ -162,7 +162,17 @@ export const createForgejoClient = (config: TConfig) => {
 
     getOrgStorageBytes: async (orgName: string): Promise<number> => {
       const repos = await request<TForgejoRepoRaw[]>("GET", `/orgs/${orgName}/repos?limit=50`)
-      return repos.reduce((sum, r) => sum + (r.size ?? 0) * 1024, 0)
+      const repoBytes = repos.reduce((sum, r) => sum + (r.size ?? 0) * 1024, 0)
+
+      let packageBytes = 0
+      try {
+        const packages = await request<ReadonlyArray<{ size: number }>>("GET", `/orgs/${orgName}/packages?limit=50`)
+        packageBytes = packages.reduce((sum, p) => sum + (p.size ?? 0), 0)
+      } catch {
+        // packages feature may be disabled
+      }
+
+      return repoBytes + packageBytes
     },
 
     healthy: async (): Promise<boolean> => {
