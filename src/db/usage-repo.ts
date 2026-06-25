@@ -7,6 +7,7 @@ export type TOrgPlanRow = {
   readonly orgId: string
   readonly plan: TPlanType
   readonly ciBlocks: number
+  readonly billingEmail?: string
   readonly createdAt: string
   readonly updatedAt: string
 }
@@ -52,16 +53,26 @@ export const createUsageRepo = (client: Client) => ({
     return rowToPlan(result.first())
   },
 
-  setPlan: async (orgId: string, plan: TPlanType, ciBlocks: number = 0): Promise<TOrgPlanRow> => {
+  setPlan: async (orgId: string, plan: TPlanType, ciBlocks: number = 0, billingEmail?: string): Promise<TOrgPlanRow> => {
     const now = new Date().toISOString()
 
-    await client.execute(
-      `INSERT INTO ${KEYSPACE}.org_plans (org_id, plan, ci_blocks, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
-      [orgId, plan, ciBlocks, now, now],
+    const existing = await client.execute(
+      `SELECT * FROM ${KEYSPACE}.org_plans WHERE org_id = ?`,
+      [orgId],
       { prepare: true },
     )
 
-    return { orgId, plan, ciBlocks, createdAt: now, updatedAt: now }
+    const existingBillingEmail = existing.rowLength > 0 ? (existing.first().billing_email as string | null) : null
+    const effectiveBillingEmail = billingEmail ?? existingBillingEmail ?? null
+    const createdAt = existing.rowLength > 0 ? (existing.first().created_at as Date).toISOString() : now
+
+    await client.execute(
+      `INSERT INTO ${KEYSPACE}.org_plans (org_id, plan, ci_blocks, billing_email, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      [orgId, plan, ciBlocks, effectiveBillingEmail, createdAt, now],
+      { prepare: true },
+    )
+
+    return { orgId, plan, ciBlocks, billingEmail: effectiveBillingEmail ?? undefined, createdAt, updatedAt: now }
   },
 
   recordPipelineUsage: async (input: {
@@ -213,8 +224,9 @@ export const createUsageRepo = (client: Client) => ({
 
 const rowToPlan = (row: Record<string, unknown>): TOrgPlanRow => ({
   orgId: row.org_id as string,
-  plan: (row.plan as TPlanType) ?? "starter",
+  plan: (row.plan as TPlanType) ?? "personal",
   ciBlocks: (row.ci_blocks as number) ?? 0,
+  billingEmail: (row.billing_email as string | null) ?? undefined,
   createdAt: (row.created_at as Date).toISOString(),
   updatedAt: (row.updated_at as Date).toISOString(),
 })

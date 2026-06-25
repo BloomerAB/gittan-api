@@ -175,6 +175,7 @@ export const CREATE_TABLES = [
     org_id text PRIMARY KEY,
     plan text,
     ci_blocks int,
+    billing_email text,
     created_at timestamp,
     updated_at timestamp
   )`,

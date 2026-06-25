@@ -102,14 +102,14 @@ describe("usage routes", () => {
   })
 
   describe("GET /orgs/:orgId/plan", () => {
-    it("returns starter defaults when no plan set", async () => {
+    it("returns personal defaults when no plan set", async () => {
       const { status, body } = await request(app, "GET", "/orgs/org-1/plan")
 
       expect(status).toBe(200)
-      expect(body.plan).toBe("starter")
-      expect(body.ciMinutesLimit).toBe(2000)
-      expect(body.storageLimitGb).toBe(20)
-      expect(body.userLimit).toBe(2)
+      expect(body.plan).toBe("personal")
+      expect(body.ciMinutesLimit).toBe(500)
+      expect(body.storageLimitGb).toBe(5)
+      expect(body.userLimit).toBe(1)
     })
 
     it("returns plan with effective CI limit including blocks", async () => {
@@ -152,7 +152,7 @@ describe("usage routes", () => {
       })
 
       expect(status).toBe(200)
-      expect(setPlan).toHaveBeenCalledWith("org-1", "team", 1)
+      expect(setPlan).toHaveBeenCalledWith("org-1", "team", 1, undefined)
     })
 
     it("rejects invalid plan type", async () => {

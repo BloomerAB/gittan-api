@@ -95,7 +95,7 @@ describe("repo routes", () => {
       memberRepo: createMockMemberRepo(),
       teamRepo,
       repoMetadata,
-      usageRepo: {} as any,
+      usageRepo: { getPlan: async () => undefined, getUsage: async () => undefined, getEffectiveCiLimit: async () => 2000 } as any,
       stepRegistry: {} as any,
       policyRepo: {} as any,
       auditRepo: {} as any,
@@ -110,6 +110,9 @@ describe("repo routes", () => {
     app.post("/orgs/:orgId/repos", POST as any)
     app.get("/orgs/:orgId/repos/:repoId", GET_REPO as any)
     app.get("/teams/:teamId/repos", GET_TEAM_REPOS as any)
+    app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      res.status(500).json({ error: err.message, stack: err.stack })
+    })
   })
 
   describe("POST /orgs/:orgId/repos", () => {

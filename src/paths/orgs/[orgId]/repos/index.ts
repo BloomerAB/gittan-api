@@ -5,6 +5,7 @@ import { z } from "zod"
 
 import { assertOrgAccess, param } from "../../../../auth/helpers.js"
 import { deps } from "../../../../deps.js"
+import { checkResourceLimit } from "../../../../limits.js"
 
 const CreateRepoBody = z.object({
   name: z
@@ -21,7 +22,7 @@ const CreateRepoBody = z.object({
 export const POST = async (req: Request, res: Response): Promise<void> => {
   if (!(await assertOrgAccess(req, res))) return
 
-  const { repoMetadata, teamRepo, forgejo, config } = deps()
+  const { repoMetadata, teamRepo, usageRepo, forgejo, config } = deps()
   const parsed = CreateRepoBody.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues })
@@ -35,6 +36,13 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
   const team = await teamRepo.getTeam(orgId, teamId)
   if (!team) {
     res.status(404).json({ error: "Team not found" })
+    return
+  }
+
+  const usage = await usageRepo.getUsage(orgId)
+  const limitCheck = await checkResourceLimit(usageRepo, orgId, "repoLimit", usage?.repoCount ?? 0)
+  if (!limitCheck.allowed) {
+    res.status(403).json({ error: limitCheck.reason })
     return
   }
 

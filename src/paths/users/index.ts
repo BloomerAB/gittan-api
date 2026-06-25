@@ -12,7 +12,7 @@ const CreateUserBody = z.object({
 })
 
 const createPersonalOrg = async (userId: string, email: string): Promise<string> => {
-  const { orgRepo, memberRepo, db } = deps()
+  const { orgRepo, memberRepo, usageRepo, db } = deps()
 
   const orgId = randomUUID()
   const org = await orgRepo.create({
@@ -22,6 +22,7 @@ const createPersonalOrg = async (userId: string, email: string): Promise<string>
   })
 
   await memberRepo.addMember(org.id, userId, "owner")
+  await usageRepo.setPlan(org.id, "personal")
 
   await db.batch(
     [

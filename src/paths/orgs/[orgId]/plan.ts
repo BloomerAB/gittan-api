@@ -6,9 +6,10 @@ import { PLAN_LIMITS, PlanTypeSchema } from "@bloomerab/gittan-types"
 import { assertOrgAccess, param } from "../../../auth/helpers.js"
 import { deps } from "../../../deps.js"
 
-const SetPlanBody = z.object({
-  plan: PlanTypeSchema,
-  ciBlocks: z.number().int().min(0).default(0),
+const UpdatePlanBody = z.object({
+  plan: PlanTypeSchema.optional(),
+  ciBlocks: z.number().int().min(0).optional(),
+  billingEmail: z.string().email().optional(),
 })
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
@@ -18,11 +19,12 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
   const plan = await usageRepo.getPlan(param(req, "orgId"))
 
   if (!plan) {
-    const defaults = PLAN_LIMITS.starter
+    const defaults = PLAN_LIMITS.personal
     res.json({
       orgId: param(req, "orgId"),
-      plan: "starter",
+      plan: "personal",
       ciBlocks: 0,
+      billingEmail: null,
       ...defaults,
     })
     return
@@ -42,17 +44,28 @@ export const PUT = async (req: Request, res: Response): Promise<void> => {
   if (!(await assertOrgAccess(req, res))) return
 
   const { usageRepo } = deps()
-  const parsed = SetPlanBody.safeParse(req.body)
+  const parsed = UpdatePlanBody.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues })
     return
   }
 
+  const orgId = param(req, "orgId")
+  const existing = await usageRepo.getPlan(orgId)
+
   const plan = await usageRepo.setPlan(
-    param(req, "orgId"),
-    parsed.data.plan,
-    parsed.data.ciBlocks,
+    orgId,
+    parsed.data.plan ?? existing?.plan ?? "personal",
+    parsed.data.ciBlocks ?? existing?.ciBlocks ?? 0,
+    parsed.data.billingEmail,
   )
 
-  res.json(plan)
+  const limits = PLAN_LIMITS[plan.plan]
+  const effectiveCiLimit = limits.ciMinutesLimit + plan.ciBlocks * 10_000
+
+  res.json({
+    ...plan,
+    ...limits,
+    ciMinutesLimit: effectiveCiLimit,
+  })
 }
