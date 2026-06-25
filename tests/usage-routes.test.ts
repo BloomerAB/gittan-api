@@ -110,7 +110,7 @@ describe("usage routes", () => {
 
       expect(status).toBe(200)
       expect(body.plan).toBe("personal")
-      expect(body.ciMinutesLimit).toBe(500)
+      expect(body.ciMinutesLimit).toBe(50)
       expect(body.storageLimitGb).toBe(5)
       expect(body.userLimit).toBe(1)
     })
