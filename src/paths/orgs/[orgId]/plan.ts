@@ -11,7 +11,7 @@ import { deps } from "../../../deps.js"
 const UpdatePlanBody = z.object({
   plan: PlanTypeSchema.optional(),
   ciBlocks: z.number().int().min(0).optional(),
-  billingEmail: z.string().email().optional(),
+  receiptEmail: z.string().email().optional(),
 })
 
 export const GET = async (req: Request, res: Response): Promise<void> => {
@@ -26,7 +26,7 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
       orgId: param(req, "orgId"),
       plan: "personal",
       ciBlocks: 0,
-      billingEmail: null,
+      receiptEmail: null,
       ...defaults,
     })
     return
@@ -98,7 +98,7 @@ export const PUT = async (req: Request, res: Response): Promise<void> => {
     orgId,
     newPlan,
     parsed.data.ciBlocks ?? existing?.ciBlocks ?? 0,
-    parsed.data.billingEmail,
+    parsed.data.receiptEmail,
   )
 
   const limits = PLAN_LIMITS[plan.plan]
