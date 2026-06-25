@@ -3,6 +3,8 @@ import { z } from "zod"
 
 import { PLAN_LIMITS, PlanTypeSchema } from "@bloomerab/gittan-types"
 
+import type { TPlanType } from "@bloomerab/gittan-types"
+
 import { assertOrgAccess, param } from "../../../auth/helpers.js"
 import { deps } from "../../../deps.js"
 
@@ -51,11 +53,39 @@ export const PUT = async (req: Request, res: Response): Promise<void> => {
   }
 
   const orgId = param(req, "orgId")
+  const { memberRepo, teamRepo, repoMetadata } = deps()
   const existing = await usageRepo.getPlan(orgId)
+
+  const newPlan: TPlanType = parsed.data.plan ?? existing?.plan ?? "personal"
+
+  if (parsed.data.plan && parsed.data.plan !== existing?.plan) {
+    const newLimits = PLAN_LIMITS[newPlan]
+    const [members, teams] = await Promise.all([
+      memberRepo.getMembers(orgId),
+      teamRepo.listTeams(orgId),
+    ])
+    const repoCounts = await Promise.all(teams.map(t => repoMetadata.listByTeam(t.id)))
+    const totalRepos = repoCounts.reduce((sum, repos) => sum + repos.length, 0)
+
+    const violations: string[] = []
+    if (newLimits.userLimit > 0 && members.length > newLimits.userLimit) {
+      violations.push(`${members.length} members exceeds limit of ${newLimits.userLimit}`)
+    }
+    if (newLimits.teamLimit > 0 && teams.length > newLimits.teamLimit) {
+      violations.push(`${teams.length} teams exceeds limit of ${newLimits.teamLimit}`)
+    }
+    if (newLimits.repoLimit > 0 && totalRepos > newLimits.repoLimit) {
+      violations.push(`${totalRepos} repos exceeds limit of ${newLimits.repoLimit}`)
+    }
+    if (violations.length > 0) {
+      res.status(409).json({ error: "Cannot downgrade plan", violations })
+      return
+    }
+  }
 
   const plan = await usageRepo.setPlan(
     orgId,
-    parsed.data.plan ?? existing?.plan ?? "personal",
+    newPlan,
     parsed.data.ciBlocks ?? existing?.ciBlocks ?? 0,
     parsed.data.billingEmail,
   )

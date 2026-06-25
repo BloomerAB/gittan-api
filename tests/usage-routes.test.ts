@@ -35,15 +35,18 @@ const mockDb = {
   batch: vi.fn(),
 } as any
 
-const stubDeps = (usageRepo: TUsageRepo) => {
+const stubDeps = (usageRepo: TUsageRepo, overrides?: { members?: unknown[]; teams?: unknown[] }) => {
   initDeps({
     config: {} as any,
     db: mockDb,
     nats: {} as any,
     orgRepo: {} as any,
-    memberRepo: createMockMemberRepo(),
-    teamRepo: {} as any,
-    repoMetadata: {} as any,
+    memberRepo: {
+      ...createMockMemberRepo(),
+      getMembers: vi.fn().mockResolvedValue(overrides?.members ?? []),
+    },
+    teamRepo: { listTeams: vi.fn().mockResolvedValue(overrides?.teams ?? []) } as any,
+    repoMetadata: { listByTeam: vi.fn().mockResolvedValue([]) } as any,
     usageRepo,
     stepRegistry: {} as any,
     policyRepo: {} as any,
@@ -161,6 +164,59 @@ describe("usage routes", () => {
       })
 
       expect(status).toBe(400)
+    })
+
+    it("rejects downgrade when usage exceeds new plan limits", async () => {
+      repo = createMockUsageRepo({
+        getPlan: vi.fn().mockResolvedValue({
+          orgId: "org-1",
+          plan: "team",
+          ciBlocks: 0,
+          createdAt: "2026-06-17T10:00:00Z",
+          updatedAt: "2026-06-17T10:00:00Z",
+        }),
+      })
+      stubDeps(repo, {
+        members: Array.from({ length: 10 }, (_, i) => ({ userId: `u-${i}`, orgId: "org-1", role: "member", joinedAt: "" })),
+        teams: Array.from({ length: 5 }, (_, i) => ({ id: `t-${i}`, orgId: "org-1", name: `team-${i}`, displayName: `Team ${i}`, createdAt: "", updatedAt: "" })),
+      })
+      app = createTestApp()
+
+      const { status, body } = await request(app, "PUT", "/orgs/org-1/plan", {
+        plan: "personal",
+      })
+
+      expect(status).toBe(409)
+      expect(body.error).toBe("Cannot downgrade plan")
+      expect(body.violations.length).toBeGreaterThan(0)
+    })
+
+    it("allows downgrade when usage fits new plan", async () => {
+      const setPlan = vi.fn().mockResolvedValue({
+        orgId: "org-1",
+        plan: "starter",
+        ciBlocks: 0,
+        createdAt: "2026-06-17T10:00:00Z",
+        updatedAt: "2026-06-17T10:00:00Z",
+      })
+      repo = createMockUsageRepo({
+        getPlan: vi.fn().mockResolvedValue({
+          orgId: "org-1",
+          plan: "team",
+          ciBlocks: 0,
+          createdAt: "2026-06-17T10:00:00Z",
+          updatedAt: "2026-06-17T10:00:00Z",
+        }),
+        setPlan,
+      })
+      stubDeps(repo)
+      app = createTestApp()
+
+      const { status } = await request(app, "PUT", "/orgs/org-1/plan", {
+        plan: "starter",
+      })
+
+      expect(status).toBe(200)
     })
   })
 
