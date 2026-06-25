@@ -19,6 +19,8 @@ const ConfigSchema = z.object({
   oauth2Issuer: z.string().url(),
   oauth2ClientId: z.string().min(1),
   oauth2ClientSecret: z.string().min(1),
+
+  emailApiUrl: z.string().url().optional(),
 })
 
 export type TConfig = z.infer<typeof ConfigSchema>
@@ -41,6 +43,7 @@ export const loadConfig = (): TConfig => {
     oauth2Issuer: env("OAUTH2_ISSUER"),
     oauth2ClientId: env("OAUTH2_CLIENT_ID"),
     oauth2ClientSecret: env("OAUTH2_CLIENT_SECRET"),
+    emailApiUrl: env("EMAIL_API_URL"),
   })
 
   if (!result.success) {

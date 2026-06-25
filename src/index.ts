@@ -2,17 +2,20 @@ import { Client as ScyllaClient } from "cassandra-driver"
 import { connect as natsConnect } from "nats"
 
 import { loadConfig } from "./config/index.js"
+import { createAlertRepo } from "./db/alert-repo.js"
 import { createAuditRepo } from "./db/audit-repo.js"
 import { createInviteRepo } from "./db/invite-repo.js"
 import { initializeSchema } from "./db/client.js"
 import { createMemberRepo } from "./db/member-repo.js"
 import { createOrgRepo } from "./db/org-repo.js"
 import { createPolicyRepo } from "./db/policy-repo.js"
+import { createReceiptRepo } from "./db/receipt-repo.js"
 import { createRepoMetadataRepo } from "./db/repo-metadata.js"
 import { createStepRegistry } from "./db/step-registry.js"
 import { createTeamRepo } from "./db/team-repo.js"
 import { createUsageRepo } from "./db/usage-repo.js"
 import { initDeps } from "./deps.js"
+import { createEmailClient } from "./integrations/email.js"
 import { createForgejoClient } from "./integrations/forgejo.js"
 import { startUsageSubscriber } from "./pipeline/usage-subscriber.js"
 import { KEYSPACE } from "./db/schema.js"
@@ -89,7 +92,10 @@ const main = async (): Promise<void> => {
   const policyRepo = createPolicyRepo(scylla)
   const auditRepo = createAuditRepo(scylla)
   const inviteRepo = createInviteRepo(scylla)
+  const receiptRepo = createReceiptRepo(scylla)
+  const alertRepo = createAlertRepo(scylla)
   const forgejo = createForgejoClient(config)
+  const email = createEmailClient(config)
 
   initDeps({
     config,
@@ -104,7 +110,10 @@ const main = async (): Promise<void> => {
     policyRepo,
     auditRepo,
     inviteRepo,
+    receiptRepo,
+    alertRepo,
     forgejo,
+    email,
   })
 
   await backfillOrgMembers(scylla)

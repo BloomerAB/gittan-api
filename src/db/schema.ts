@@ -264,4 +264,25 @@ export const CREATE_TABLES = [
     created_at timestamp,
     PRIMARY KEY (org_id, id)
   ) WITH CLUSTERING ORDER BY (id DESC)`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.receipts (
+    org_id text,
+    id text,
+    month text,
+    amount_eur int,
+    plan text,
+    description text,
+    items text,
+    created_at timestamp,
+    PRIMARY KEY (org_id, id)
+  ) WITH CLUSTERING ORDER BY (id DESC)`,
+
+  `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.usage_alerts (
+    org_id text,
+    month text,
+    resource text,
+    threshold int,
+    sent_at timestamp,
+    PRIMARY KEY ((org_id, month), resource, threshold)
+  )`,
 ] as const

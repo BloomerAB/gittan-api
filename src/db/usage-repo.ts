@@ -180,7 +180,7 @@ export const createUsageRepo = (client: Client) => ({
       const ratio = ciMinutesLimit > 0 ? ciMinutesUsed / ciMinutesLimit : 0
       const quotaStatus = ratio >= 1 ? "blocked" as const : ratio >= 0.9 ? "warning" as const : "ok" as const
 
-      const planPrice = plan === "team" ? 199 : 29
+      const planPrice = plan === "team" ? 199 : plan === "starter" ? 39 : 0
       const monthlyRevenue = planPrice + spendingCapEur
 
       return {

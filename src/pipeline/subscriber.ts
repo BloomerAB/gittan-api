@@ -2,9 +2,12 @@ import type { NatsConnection } from "nats"
 import { StringCodec } from "nats"
 import { BLOCK_ADDITIONS, PLAN_LIMITS, spendingCapToBlocks } from "@bloomerab/gittan-types"
 
-import type { TForgejoClient } from "../integrations/forgejo.js"
+import type { TAlertRepo } from "../db/alert-repo.js"
 import type { TRepoMetadataRepo } from "../db/repo-metadata.js"
 import type { TUsageRepo } from "../db/usage-repo.js"
+import type { TEmailClient } from "../integrations/email.js"
+import type { TForgejoClient } from "../integrations/forgejo.js"
+import { checkUsageAlerts } from "../lib/usage-alerts.js"
 import { resolvePipeline, type TResolvedPipeline } from "./resolver.js"
 
 export type TPushEventMessage = {
@@ -34,7 +37,11 @@ export type TSubscriberDeps = {
   readonly nats: NatsConnection
   readonly repoMetadata: TRepoMetadataRepo
   readonly usageRepo: TUsageRepo
+  readonly alertRepo: TAlertRepo
+  readonly email: TEmailClient
   readonly forgejo: TForgejoClient
+  readonly getOrgName: (orgId: string) => Promise<string>
+  readonly getReceiptEmail: (orgId: string) => Promise<string | undefined>
   readonly getPolicies: (orgId: string) => Promise<ReadonlyArray<import("@bloomerab/gittan-types").TOrgPolicy>>
   readonly getTemplate: (teamId: string) => Promise<import("@bloomerab/gittan-types").TTeamTemplate | undefined>
   readonly getRepoFiles: (forgejoFullName: string) => Promise<ReadonlyArray<string>>
@@ -91,12 +98,14 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
 
     const plan = await deps.usageRepo.getPlan(pushEvent.orgId)
     const planType = plan?.plan ?? "personal"
-    const blocks = spendingCapToBlocks(plan?.spendingCapEur ?? 0)
+    const spendingCapEur = plan?.spendingCapEur ?? 0
+    const blocks = spendingCapToBlocks(spendingCapEur)
     const storageLimitGb = PLAN_LIMITS[planType].storageLimitGb + blocks * BLOCK_ADDITIONS.storageGb
     const storageLimitBytes = storageLimitGb * 1024 * 1024 * 1024
 
+    let storageBytes = 0
     try {
-      const storageBytes = await deps.forgejo.getOrgStorageBytes(pushEvent.orgId)
+      storageBytes = await deps.forgejo.getOrgStorageBytes(pushEvent.orgId)
       if (storageLimitBytes > 0 && storageBytes >= storageLimitBytes) {
         const usedGb = (storageBytes / (1024 * 1024 * 1024)).toFixed(1)
         console.warn(`Storage quota exceeded for org ${pushEvent.orgId}: ${usedGb}GB/${storageLimitGb}GB`)
@@ -105,6 +114,23 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
       }
     } catch (err) {
       console.error(`Failed to check storage for org ${pushEvent.orgId}:`, err)
+    }
+
+    if (usage) {
+      const [orgName, receiptEmail] = await Promise.all([
+        deps.getOrgName(pushEvent.orgId),
+        deps.getReceiptEmail(pushEvent.orgId),
+      ])
+      checkUsageAlerts({
+        orgId: pushEvent.orgId,
+        orgName,
+        receiptEmail,
+        plan: planType,
+        spendingCapEur,
+        usage: { ...usage, storageBytes },
+        alertRepo: deps.alertRepo,
+        email: deps.email,
+      }).catch(err => console.error(`Failed to check usage alerts for org ${pushEvent.orgId}:`, err))
     }
 
     const repoMeta = await deps.repoMetadata.getById(

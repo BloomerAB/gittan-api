@@ -2,15 +2,18 @@ import type { Client } from "cassandra-driver"
 import type { NatsConnection } from "nats"
 
 import type { TConfig } from "./config/index.js"
+import type { TAlertRepo } from "./db/alert-repo.js"
 import type { TAuditRepo } from "./db/audit-repo.js"
 import type { TInviteRepo } from "./db/invite-repo.js"
 import type { TMemberRepo } from "./db/member-repo.js"
 import type { TOrgRepo } from "./db/org-repo.js"
 import type { TPolicyRepo } from "./db/policy-repo.js"
+import type { TReceiptRepo } from "./db/receipt-repo.js"
 import type { TRepoMetadataRepo } from "./db/repo-metadata.js"
 import type { TStepRegistry } from "./db/step-registry.js"
 import type { TTeamRepo } from "./db/team-repo.js"
 import type { TUsageRepo } from "./db/usage-repo.js"
+import type { TEmailClient } from "./integrations/email.js"
 import type { TForgejoClient } from "./integrations/forgejo.js"
 
 export type TDeps = {
@@ -26,7 +29,10 @@ export type TDeps = {
   readonly policyRepo: TPolicyRepo
   readonly auditRepo: TAuditRepo
   readonly inviteRepo: TInviteRepo
+  readonly receiptRepo: TReceiptRepo
+  readonly alertRepo: TAlertRepo
   readonly forgejo: TForgejoClient
+  readonly email: TEmailClient
 }
 
 let instance: TDeps | undefined
