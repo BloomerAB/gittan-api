@@ -13,7 +13,7 @@ export const operation = {
           type: "object",
           required: ["name", "image", "run"],
           properties: {
-            name: { type: "string", pattern: "^[a-z0-9-]+$", minLength: 1, maxLength: 64 },
+            name: { type: "string", pattern: "^[a-z0-9-/]+$", minLength: 1, maxLength: 64 },
             image: { type: "string", minLength: 1 },
             run: { type: "string", minLength: 1 },
             defaults: { type: "object", additionalProperties: { type: "string" } },

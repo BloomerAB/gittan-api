@@ -13,7 +13,7 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
 }
 
 const RegisterStepBody = z.object({
-  name: z.string().min(1).max(64).regex(/^[a-z0-9-]+$/),
+  name: z.string().min(1).max(64).regex(/^[a-z0-9-/]+$/),
   image: z.string().min(1),
   run: z.string().min(1),
   defaults: z.record(z.string()).optional(),
