@@ -174,7 +174,7 @@ export const CREATE_TABLES = [
   `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.org_plans (
     org_id text PRIMARY KEY,
     plan text,
-    blocks int,
+    spending_cap_eur int,
     billing_email text,
     created_at timestamp,
     updated_at timestamp

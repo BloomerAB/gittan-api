@@ -14,7 +14,7 @@ export const operation = {
           required: ["plan"],
           properties: {
             plan: { type: "string", enum: ["starter", "team"] },
-            blocks: { type: "integer", minimum: 0, default: 0 },
+            spendingCapEur: { type: "integer", minimum: 0, default: 0 },
           },
         },
       },

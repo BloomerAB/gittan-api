@@ -1,12 +1,12 @@
 import type { Client } from "cassandra-driver"
-import { BLOCK_ADDITIONS, PLAN_LIMITS, type TPlanType } from "@bloomerab/gittan-types"
+import { BLOCK_ADDITIONS, BLOCK_PRICE_EUR, PLAN_LIMITS, spendingCapToBlocks, type TPlanType } from "@bloomerab/gittan-types"
 
 import { KEYSPACE } from "./schema.js"
 
 export type TOrgPlanRow = {
   readonly orgId: string
   readonly plan: TPlanType
-  readonly blocks: number
+  readonly spendingCapEur: number
   readonly receiptEmail?: string
   readonly createdAt: string
   readonly updatedAt: string
@@ -50,7 +50,7 @@ export const createUsageRepo = (client: Client) => ({
     return rowToPlan(result.first())
   },
 
-  setPlan: async (orgId: string, plan: TPlanType, blocks: number = 0, receiptEmail?: string): Promise<TOrgPlanRow> => {
+  setPlan: async (orgId: string, plan: TPlanType, spendingCapEur: number = 0, receiptEmail?: string): Promise<TOrgPlanRow> => {
     const now = new Date().toISOString()
 
     const existing = await client.execute(
@@ -64,12 +64,12 @@ export const createUsageRepo = (client: Client) => ({
     const createdAt = existing.rowLength > 0 ? (existing.first().created_at as Date).toISOString() : now
 
     await client.execute(
-      `INSERT INTO ${KEYSPACE}.org_plans (org_id, plan, blocks, billing_email, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
-      [orgId, plan, blocks, effectiveEmail, createdAt, now],
+      `INSERT INTO ${KEYSPACE}.org_plans (org_id, plan, spending_cap_eur, billing_email, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      [orgId, plan, spendingCapEur, effectiveEmail, createdAt, now],
       { prepare: true },
     )
 
-    return { orgId, plan, blocks, receiptEmail: effectiveEmail ?? undefined, createdAt, updatedAt: now }
+    return { orgId, plan, spendingCapEur, receiptEmail: effectiveEmail ?? undefined, createdAt, updatedAt: now }
   },
 
   recordPipelineUsage: async (input: {
@@ -133,16 +133,16 @@ export const createUsageRepo = (client: Client) => ({
 
     const plan = result.first()
     const planType = (plan.plan as TPlanType) ?? "starter"
-    const blocks = (plan.blocks as number) ?? 0
+    const spendingCapEur = (plan.spending_cap_eur as number) ?? 0
     const baseLimits = PLAN_LIMITS[planType]
 
-    return baseLimits.ciMinutesLimit + blocks * BLOCK_ADDITIONS.ciMinutes
+    return baseLimits.ciMinutesLimit + spendingCapToBlocks(spendingCapEur) * BLOCK_ADDITIONS.ciMinutes
   },
 
   listAllOrgUsage: async (): Promise<ReadonlyArray<{
     readonly orgId: string
     readonly plan: TPlanType
-    readonly blocks: number
+    readonly spendingCapEur: number
     readonly ciMinutesUsed: number
     readonly ciMinutesLimit: number
     readonly storageBytes: number
@@ -171,7 +171,8 @@ export const createUsageRepo = (client: Client) => ({
       const usageRow = usageByOrg.get(orgId)
 
       const plan = (planRow?.plan as TPlanType) ?? "starter"
-      const blocks = (planRow?.blocks as number) ?? 0
+      const spendingCapEur = (planRow?.spending_cap_eur as number) ?? 0
+      const blocks = spendingCapToBlocks(spendingCapEur)
       const baseLimits = PLAN_LIMITS[plan]
       const ciMinutesLimit = baseLimits.ciMinutesLimit + blocks * BLOCK_ADDITIONS.ciMinutes
       const ciMinutesUsed = (usageRow?.ci_minutes_used as number) ?? 0
@@ -180,13 +181,12 @@ export const createUsageRepo = (client: Client) => ({
       const quotaStatus = ratio >= 1 ? "blocked" as const : ratio >= 0.9 ? "warning" as const : "ok" as const
 
       const planPrice = plan === "team" ? 199 : 29
-      const blockPrice = blocks * 79
-      const monthlyRevenue = planPrice + blockPrice
+      const monthlyRevenue = planPrice + spendingCapEur
 
       return {
         orgId,
         plan,
-        blocks,
+        spendingCapEur,
         ciMinutesUsed,
         ciMinutesLimit,
         storageBytes: Number(usageRow?.storage_bytes ?? 0),
@@ -200,7 +200,7 @@ export const createUsageRepo = (client: Client) => ({
 const rowToPlan = (row: Record<string, unknown>): TOrgPlanRow => ({
   orgId: row.org_id as string,
   plan: (row.plan as TPlanType) ?? "personal",
-  blocks: (row.blocks as number) ?? 0,
+  spendingCapEur: (row.spending_cap_eur as number) ?? 0,
   receiptEmail: (row.billing_email as string | null) ?? undefined,
   createdAt: (row.created_at as Date).toISOString(),
   updatedAt: (row.updated_at as Date).toISOString(),

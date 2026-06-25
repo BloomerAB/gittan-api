@@ -107,17 +107,18 @@ describe("usage routes", () => {
 
       expect(status).toBe(200)
       expect(body.plan).toBe("personal")
+      expect(body.spendingCapEur).toBe(0)
       expect(body.ciMinutesLimit).toBe(50)
       expect(body.storageLimitGb).toBe(1)
       expect(body.aiEnabled).toBe(false)
     })
 
-    it("returns plan with effective CI limit including blocks", async () => {
+    it("returns plan with effective CI limit including spending cap", async () => {
       repo = createMockUsageRepo({
         getPlan: vi.fn().mockResolvedValue({
           orgId: "org-1",
           plan: "team",
-          blocks: 2,
+          spendingCapEur: 258,
           createdAt: "2026-06-17T10:00:00Z",
           updatedAt: "2026-06-17T10:00:00Z",
         }),
@@ -138,7 +139,7 @@ describe("usage routes", () => {
       const setPlan = vi.fn().mockResolvedValue({
         orgId: "org-1",
         plan: "team",
-        blocks: 1,
+        spendingCapEur: 129,
         createdAt: "2026-06-17T10:00:00Z",
         updatedAt: "2026-06-17T10:00:00Z",
       })
@@ -148,11 +149,11 @@ describe("usage routes", () => {
 
       const { status } = await request(app, "PUT", "/orgs/org-1/plan", {
         plan: "team",
-        blocks: 1,
+        spendingCapEur: 129,
       })
 
       expect(status).toBe(200)
-      expect(setPlan).toHaveBeenCalledWith("org-1", "team", 1, undefined)
+      expect(setPlan).toHaveBeenCalledWith("org-1", "team", 129, undefined)
     })
 
     it("rejects invalid plan type", async () => {
@@ -168,7 +169,7 @@ describe("usage routes", () => {
         getPlan: vi.fn().mockResolvedValue({
           orgId: "org-1",
           plan: "team",
-          blocks: 0,
+          spendingCapEur: 0,
           createdAt: "2026-06-17T10:00:00Z",
           updatedAt: "2026-06-17T10:00:00Z",
         }),
@@ -206,7 +207,7 @@ describe("usage routes", () => {
       const setPlan = vi.fn().mockResolvedValue({
         orgId: "org-1",
         plan: "starter",
-        blocks: 0,
+        spendingCapEur: 0,
         createdAt: "2026-06-17T10:00:00Z",
         updatedAt: "2026-06-17T10:00:00Z",
       })
@@ -214,7 +215,7 @@ describe("usage routes", () => {
         getPlan: vi.fn().mockResolvedValue({
           orgId: "org-1",
           plan: "team",
-          blocks: 0,
+          spendingCapEur: 0,
           createdAt: "2026-06-17T10:00:00Z",
           updatedAt: "2026-06-17T10:00:00Z",
         }),

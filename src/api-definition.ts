@@ -52,7 +52,7 @@ const apiDoc: OpenAPIV3.Document = {
         properties: {
           orgId: { type: "string" },
           plan: { type: "string", enum: ["personal", "starter", "team"] },
-          blocks: { type: "integer" },
+          spendingCapEur: { type: "integer" },
           ciMinutesLimit: { type: "integer" },
           storageLimitGb: { type: "integer" },
           aiEnabled: { type: "boolean" },

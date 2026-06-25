@@ -1,6 +1,6 @@
 import type { NatsConnection } from "nats"
 import { StringCodec } from "nats"
-import { BLOCK_ADDITIONS, PLAN_LIMITS } from "@bloomerab/gittan-types"
+import { BLOCK_ADDITIONS, PLAN_LIMITS, spendingCapToBlocks } from "@bloomerab/gittan-types"
 
 import type { TForgejoClient } from "../integrations/forgejo.js"
 import type { TRepoMetadataRepo } from "../db/repo-metadata.js"
@@ -91,7 +91,7 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
 
     const plan = await deps.usageRepo.getPlan(pushEvent.orgId)
     const planType = plan?.plan ?? "personal"
-    const blocks = plan?.blocks ?? 0
+    const blocks = spendingCapToBlocks(plan?.spendingCapEur ?? 0)
     const storageLimitGb = PLAN_LIMITS[planType].storageLimitGb + blocks * BLOCK_ADDITIONS.storageGb
     const storageLimitBytes = storageLimitGb * 1024 * 1024 * 1024
 

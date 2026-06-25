@@ -1,7 +1,7 @@
 import type { Request, Response } from "express"
 import { z } from "zod"
 
-import { BLOCK_ADDITIONS, PLAN_LIMITS, PlanTypeSchema } from "@bloomerab/gittan-types"
+import { BLOCK_ADDITIONS, PLAN_LIMITS, PlanTypeSchema, spendingCapToBlocks } from "@bloomerab/gittan-types"
 
 import type { TPlanType } from "@bloomerab/gittan-types"
 
@@ -10,7 +10,7 @@ import { deps } from "../../../deps.js"
 
 const UpdatePlanBody = z.object({
   plan: PlanTypeSchema.optional(),
-  blocks: z.number().int().min(0).optional(),
+  spendingCapEur: z.number().int().min(0).optional(),
   receiptEmail: z.string().email().optional(),
 })
 
@@ -25,7 +25,7 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
     res.json({
       orgId: param(req, "orgId"),
       plan: "personal",
-      blocks: 0,
+      spendingCapEur: 0,
       receiptEmail: null,
       ...defaults,
     })
@@ -33,7 +33,7 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
   }
 
   const limits = PLAN_LIMITS[plan.plan]
-  const effectiveCiLimit = limits.ciMinutesLimit + plan.blocks * BLOCK_ADDITIONS.ciMinutes
+  const effectiveCiLimit = limits.ciMinutesLimit + spendingCapToBlocks(plan.spendingCapEur) * BLOCK_ADDITIONS.ciMinutes
 
   res.json({
     ...plan,
@@ -81,12 +81,12 @@ export const PUT = async (req: Request, res: Response): Promise<void> => {
   const plan = await usageRepo.setPlan(
     orgId,
     newPlan,
-    parsed.data.blocks ?? existing?.blocks ?? 0,
+    parsed.data.spendingCapEur ?? existing?.spendingCapEur ?? 0,
     parsed.data.receiptEmail,
   )
 
   const limits = PLAN_LIMITS[plan.plan]
-  const effectiveCiLimit = limits.ciMinutesLimit + plan.blocks * BLOCK_ADDITIONS.ciMinutes
+  const effectiveCiLimit = limits.ciMinutesLimit + spendingCapToBlocks(plan.spendingCapEur) * BLOCK_ADDITIONS.ciMinutes
 
   res.json({
     ...plan,
