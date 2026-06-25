@@ -1,6 +1,8 @@
 import type { NatsConnection } from "nats"
 import { StringCodec } from "nats"
+import { PLAN_LIMITS } from "@bloomerab/gittan-types"
 
+import type { TForgejoClient } from "../integrations/forgejo.js"
 import type { TRepoMetadataRepo } from "../db/repo-metadata.js"
 import type { TUsageRepo } from "../db/usage-repo.js"
 import { resolvePipeline, type TResolvedPipeline } from "./resolver.js"
@@ -32,6 +34,7 @@ export type TSubscriberDeps = {
   readonly nats: NatsConnection
   readonly repoMetadata: TRepoMetadataRepo
   readonly usageRepo: TUsageRepo
+  readonly forgejo: TForgejoClient
   readonly getPolicies: (orgId: string) => Promise<ReadonlyArray<import("@bloomerab/gittan-types").TOrgPolicy>>
   readonly getTemplate: (teamId: string) => Promise<import("@bloomerab/gittan-types").TTeamTemplate | undefined>
   readonly getRepoFiles: (forgejoFullName: string) => Promise<ReadonlyArray<string>>
@@ -42,7 +45,7 @@ export type TSubscriberDeps = {
 export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
   const sc = StringCodec()
 
-  const rejectOverQuota = (pushEvent: TPushEventMessage): void => {
+  const rejectQuota = (pushEvent: TPushEventMessage, reason: string): void => {
     const now = new Date().toISOString()
     deps.nats.publish(
       "gittan.pipeline.result",
@@ -61,7 +64,7 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
               status: "failed",
               durationMs: 0,
               source: "policy",
-              error: "CI minutes quota exceeded. Upgrade your plan or purchase additional CI blocks.",
+              error: reason,
             },
           ],
           startedAt: now,
@@ -81,9 +84,25 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
     ])
 
     if (usage && ciLimit > 0 && usage.ciMinutesUsed >= ciLimit) {
-      console.warn(`Quota exceeded for org ${pushEvent.orgId}: ${usage.ciMinutesUsed}/${ciLimit} CI minutes`)
-      rejectOverQuota(pushEvent)
+      console.warn(`CI quota exceeded for org ${pushEvent.orgId}: ${usage.ciMinutesUsed}/${ciLimit} CI minutes`)
+      rejectQuota(pushEvent, "CI minutes quota exceeded. Upgrade your plan or purchase additional CI blocks.")
       return
+    }
+
+    const plan = await deps.usageRepo.getPlan(pushEvent.orgId)
+    const planType = plan?.plan ?? "personal"
+    const storageLimitBytes = PLAN_LIMITS[planType].storageLimitGb * 1024 * 1024 * 1024
+
+    try {
+      const storageBytes = await deps.forgejo.getOrgStorageBytes(pushEvent.orgId)
+      if (storageLimitBytes > 0 && storageBytes >= storageLimitBytes) {
+        const usedGb = (storageBytes / (1024 * 1024 * 1024)).toFixed(1)
+        console.warn(`Storage quota exceeded for org ${pushEvent.orgId}: ${usedGb}GB/${PLAN_LIMITS[planType].storageLimitGb}GB`)
+        rejectQuota(pushEvent, `Storage quota exceeded (${usedGb}GB/${PLAN_LIMITS[planType].storageLimitGb}GB). Upgrade your plan to continue.`)
+        return
+      }
+    } catch (err) {
+      console.error(`Failed to check storage for org ${pushEvent.orgId}:`, err)
     }
 
     const repoMeta = await deps.repoMetadata.getById(

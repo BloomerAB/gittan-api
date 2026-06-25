@@ -67,6 +67,12 @@ export const PUT = async (req: Request, res: Response): Promise<void> => {
     const repoCounts = await Promise.all(teams.map(t => repoMetadata.listByTeam(t.id)))
     const totalRepos = repoCounts.reduce((sum, repos) => sum + repos.length, 0)
 
+    const { forgejo } = deps()
+    let storageBytes = 0
+    try {
+      storageBytes = await forgejo.getOrgStorageBytes(orgId)
+    } catch { /* org may not exist in forgejo yet */ }
+
     const violations: string[] = []
     if (newLimits.userLimit > 0 && members.length > newLimits.userLimit) {
       violations.push(`${members.length} members exceeds limit of ${newLimits.userLimit}`)
@@ -76,6 +82,11 @@ export const PUT = async (req: Request, res: Response): Promise<void> => {
     }
     if (newLimits.repoLimit > 0 && totalRepos > newLimits.repoLimit) {
       violations.push(`${totalRepos} repos exceeds limit of ${newLimits.repoLimit}`)
+    }
+    const storageLimitBytes = newLimits.storageLimitGb * 1024 * 1024 * 1024
+    if (storageLimitBytes > 0 && storageBytes > storageLimitBytes) {
+      const usedGb = (storageBytes / (1024 * 1024 * 1024)).toFixed(1)
+      violations.push(`${usedGb}GB storage exceeds limit of ${newLimits.storageLimitGb}GB`)
     }
     if (violations.length > 0) {
       res.status(409).json({ error: "Cannot downgrade plan", violations })

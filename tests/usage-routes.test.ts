@@ -51,7 +51,7 @@ const stubDeps = (usageRepo: TUsageRepo, overrides?: { members?: unknown[]; team
     stepRegistry: {} as any,
     policyRepo: {} as any,
     auditRepo: {} as any,
-    forgejo: {} as any,
+    forgejo: { getOrgStorageBytes: vi.fn().mockResolvedValue(0) } as any,
   })
 }
 

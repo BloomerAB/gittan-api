@@ -37,6 +37,7 @@ type TForgejoRepoRaw = {
   readonly ssh_url: string
   readonly empty: boolean
   readonly default_branch: string
+  readonly size: number
 }
 
 const mapRepo = (raw: TForgejoRepoRaw): TForgejoRepo => ({
@@ -158,6 +159,11 @@ export const createForgejoClient = (config: TConfig) => {
       repoName: string,
     ): Promise<ReadonlyArray<TForgejoWebhook>> =>
       request("GET", `/repos/${orgName}/${repoName}/hooks`),
+
+    getOrgStorageBytes: async (orgName: string): Promise<number> => {
+      const repos = await request<TForgejoRepoRaw[]>("GET", `/orgs/${orgName}/repos?limit=50`)
+      return repos.reduce((sum, r) => sum + (r.size ?? 0) * 1024, 0)
+    },
 
     healthy: async (): Promise<boolean> => {
       try {
