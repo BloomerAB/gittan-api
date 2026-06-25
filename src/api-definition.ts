@@ -51,13 +51,11 @@ const apiDoc: OpenAPIV3.Document = {
         type: "object",
         properties: {
           orgId: { type: "string" },
-          plan: { type: "string", enum: ["starter", "team"] },
-          ciBlocks: { type: "integer" },
+          plan: { type: "string", enum: ["personal", "starter", "team"] },
+          blocks: { type: "integer" },
           ciMinutesLimit: { type: "integer" },
           storageLimitGb: { type: "integer" },
-          userLimit: { type: "integer" },
-          teamLimit: { type: "integer" },
-          repoLimit: { type: "integer" },
+          aiEnabled: { type: "boolean" },
         },
       },
       OrgUsage: {
@@ -68,9 +66,6 @@ const apiDoc: OpenAPIV3.Document = {
           ciMinutesUsed: { type: "integer" },
           ciMinutesLimit: { type: "integer" },
           storageBytes: { type: "integer" },
-          userCount: { type: "integer" },
-          teamCount: { type: "integer" },
-          repoCount: { type: "integer" },
         },
       },
       Org: {

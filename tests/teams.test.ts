@@ -63,7 +63,7 @@ const stubDeps = (teamRepo: TTeamRepo, auditRepo: TAuditRepo, db?: any) => {
     memberRepo: createMockMemberRepo(),
     teamRepo,
     repoMetadata: {} as any,
-    usageRepo: { getPlan: async () => undefined, getUsage: async () => undefined, getEffectiveCiLimit: async () => 2000 } as any,
+    usageRepo: {} as any,
     stepRegistry: {} as any,
     policyRepo: {} as any,
     auditRepo,

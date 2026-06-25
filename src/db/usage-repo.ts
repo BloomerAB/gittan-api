@@ -1,12 +1,12 @@
 import type { Client } from "cassandra-driver"
-import { PLAN_LIMITS, type TPlanType } from "@bloomerab/gittan-types"
+import { BLOCK_ADDITIONS, PLAN_LIMITS, type TPlanType } from "@bloomerab/gittan-types"
 
 import { KEYSPACE } from "./schema.js"
 
 export type TOrgPlanRow = {
   readonly orgId: string
   readonly plan: TPlanType
-  readonly ciBlocks: number
+  readonly blocks: number
   readonly receiptEmail?: string
   readonly createdAt: string
   readonly updatedAt: string
@@ -30,9 +30,6 @@ export type TOrgUsageRow = {
   readonly month: string
   readonly ciMinutesUsed: number
   readonly storageBytes: number
-  readonly userCount: number
-  readonly teamCount: number
-  readonly repoCount: number
   readonly updatedAt: string
 }
 
@@ -53,7 +50,7 @@ export const createUsageRepo = (client: Client) => ({
     return rowToPlan(result.first())
   },
 
-  setPlan: async (orgId: string, plan: TPlanType, ciBlocks: number = 0, receiptEmail?: string): Promise<TOrgPlanRow> => {
+  setPlan: async (orgId: string, plan: TPlanType, blocks: number = 0, receiptEmail?: string): Promise<TOrgPlanRow> => {
     const now = new Date().toISOString()
 
     const existing = await client.execute(
@@ -67,12 +64,12 @@ export const createUsageRepo = (client: Client) => ({
     const createdAt = existing.rowLength > 0 ? (existing.first().created_at as Date).toISOString() : now
 
     await client.execute(
-      `INSERT INTO ${KEYSPACE}.org_plans (org_id, plan, ci_blocks, billing_email, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
-      [orgId, plan, ciBlocks, effectiveEmail, createdAt, now],
+      `INSERT INTO ${KEYSPACE}.org_plans (org_id, plan, blocks, billing_email, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      [orgId, plan, blocks, effectiveEmail, createdAt, now],
       { prepare: true },
     )
 
-    return { orgId, plan, ciBlocks, receiptEmail: effectiveEmail ?? undefined, createdAt, updatedAt: now }
+    return { orgId, plan, blocks, receiptEmail: effectiveEmail ?? undefined, createdAt, updatedAt: now }
   },
 
   recordPipelineUsage: async (input: {
@@ -136,22 +133,19 @@ export const createUsageRepo = (client: Client) => ({
 
     const plan = result.first()
     const planType = (plan.plan as TPlanType) ?? "starter"
-    const ciBlocks = (plan.ci_blocks as number) ?? 0
+    const blocks = (plan.blocks as number) ?? 0
     const baseLimits = PLAN_LIMITS[planType]
 
-    return baseLimits.ciMinutesLimit + ciBlocks * 10_000
+    return baseLimits.ciMinutesLimit + blocks * BLOCK_ADDITIONS.ciMinutes
   },
 
   listAllOrgUsage: async (): Promise<ReadonlyArray<{
     readonly orgId: string
     readonly plan: TPlanType
-    readonly ciBlocks: number
+    readonly blocks: number
     readonly ciMinutesUsed: number
     readonly ciMinutesLimit: number
     readonly storageBytes: number
-    readonly userCount: number
-    readonly teamCount: number
-    readonly repoCount: number
     readonly quotaStatus: "ok" | "warning" | "blocked"
     readonly monthlyRevenue: number
   }>> => {
@@ -177,55 +171,36 @@ export const createUsageRepo = (client: Client) => ({
       const usageRow = usageByOrg.get(orgId)
 
       const plan = (planRow?.plan as TPlanType) ?? "starter"
-      const ciBlocks = (planRow?.ci_blocks as number) ?? 0
+      const blocks = (planRow?.blocks as number) ?? 0
       const baseLimits = PLAN_LIMITS[plan]
-      const ciMinutesLimit = baseLimits.ciMinutesLimit + ciBlocks * 10_000
+      const ciMinutesLimit = baseLimits.ciMinutesLimit + blocks * BLOCK_ADDITIONS.ciMinutes
       const ciMinutesUsed = (usageRow?.ci_minutes_used as number) ?? 0
 
       const ratio = ciMinutesLimit > 0 ? ciMinutesUsed / ciMinutesLimit : 0
       const quotaStatus = ratio >= 1 ? "blocked" as const : ratio >= 0.9 ? "warning" as const : "ok" as const
 
       const planPrice = plan === "team" ? 199 : 29
-      const blockPrice = ciBlocks * 79
+      const blockPrice = blocks * 79
       const monthlyRevenue = planPrice + blockPrice
 
       return {
         orgId,
         plan,
-        ciBlocks,
+        blocks,
         ciMinutesUsed,
         ciMinutesLimit,
         storageBytes: Number(usageRow?.storage_bytes ?? 0),
-        userCount: (usageRow?.user_count as number) ?? 0,
-        teamCount: (usageRow?.team_count as number) ?? 0,
-        repoCount: (usageRow?.repo_count as number) ?? 0,
         quotaStatus,
         monthlyRevenue,
       }
     })
-  },
-
-  updateCounts: async (orgId: string, counts: {
-    readonly userCount: number
-    readonly teamCount: number
-    readonly repoCount: number
-    readonly storageBytes: number
-  }): Promise<void> => {
-    const month = currentMonth()
-    const now = new Date().toISOString()
-
-    await client.execute(
-      `UPDATE ${KEYSPACE}.org_usage_monthly SET user_count = ?, team_count = ?, repo_count = ?, storage_bytes = ?, updated_at = ? WHERE org_id = ? AND month = ?`,
-      [counts.userCount, counts.teamCount, counts.repoCount, counts.storageBytes, now, orgId, month],
-      { prepare: true },
-    )
   },
 })
 
 const rowToPlan = (row: Record<string, unknown>): TOrgPlanRow => ({
   orgId: row.org_id as string,
   plan: (row.plan as TPlanType) ?? "personal",
-  ciBlocks: (row.ci_blocks as number) ?? 0,
+  blocks: (row.blocks as number) ?? 0,
   receiptEmail: (row.billing_email as string | null) ?? undefined,
   createdAt: (row.created_at as Date).toISOString(),
   updatedAt: (row.updated_at as Date).toISOString(),
@@ -236,9 +211,6 @@ const rowToUsage = (row: Record<string, unknown>): TOrgUsageRow => ({
   month: row.month as string,
   ciMinutesUsed: (row.ci_minutes_used as number) ?? 0,
   storageBytes: Number(row.storage_bytes ?? 0),
-  userCount: (row.user_count as number) ?? 0,
-  teamCount: (row.team_count as number) ?? 0,
-  repoCount: (row.repo_count as number) ?? 0,
   updatedAt: row.updated_at ? (row.updated_at as Date).toISOString() : new Date().toISOString(),
 })
 

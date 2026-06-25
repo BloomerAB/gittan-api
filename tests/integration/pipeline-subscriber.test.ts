@@ -16,7 +16,7 @@ const createMockUsageRepo = (overrides: Partial<TUsageRepo> = {}): TUsageRepo =>
   getUsage: vi.fn().mockResolvedValue(undefined),
   getUsageHistory: vi.fn().mockResolvedValue([]),
   getEffectiveCiLimit: vi.fn().mockResolvedValue(2000),
-  updateCounts: vi.fn(),
+  listAllOrgUsage: vi.fn().mockResolvedValue([]),
   ...overrides,
 })
 
@@ -145,9 +145,6 @@ describe("pipeline subscriber (integration)", () => {
         month: "2026-06",
         ciMinutesUsed: 2100,
         storageBytes: 0,
-        userCount: 1,
-        teamCount: 1,
-        repoCount: 1,
         updatedAt: "2026-06-17T10:00:00Z",
       }),
     })

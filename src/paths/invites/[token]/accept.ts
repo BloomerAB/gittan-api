@@ -3,11 +3,10 @@ import type { Request, Response } from "express"
 import { getAuthUser, param } from "../../../auth/helpers.js"
 import { deps } from "../../../deps.js"
 import { KEYSPACE } from "../../../db/schema.js"
-import { checkResourceLimit } from "../../../limits.js"
 
 export const POST = async (req: Request, res: Response): Promise<void> => {
   const user = getAuthUser(req)
-  const { inviteRepo, memberRepo, orgRepo, usageRepo, db } = deps()
+  const { inviteRepo, memberRepo, orgRepo, db } = deps()
   const token = param(req, "token")
 
   const invite = await inviteRepo.getByToken(token)
@@ -25,13 +24,6 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
   const org = await orgRepo.getById(invite.orgId)
   if (!org) {
     res.status(404).json({ error: "Organization not found" })
-    return
-  }
-
-  const members = await memberRepo.getMembers(invite.orgId)
-  const limitCheck = await checkResourceLimit(usageRepo, invite.orgId, "userLimit", members.length)
-  if (!limitCheck.allowed) {
-    res.status(403).json({ error: limitCheck.reason })
     return
   }
 

@@ -95,7 +95,7 @@ describe("repo routes", () => {
       memberRepo: createMockMemberRepo(),
       teamRepo,
       repoMetadata,
-      usageRepo: { getPlan: async () => undefined, getUsage: async () => undefined, getEffectiveCiLimit: async () => 2000 } as any,
+      usageRepo: {} as any,
       stepRegistry: {} as any,
       policyRepo: {} as any,
       auditRepo: {} as any,
@@ -246,41 +246,6 @@ describe("repo routes", () => {
       expect(status).toBe(400)
     })
 
-    it("blocks repo creation when plan limit reached", async () => {
-      vi.mocked(teamRepo.getTeam).mockResolvedValue({
-        id: "team-1",
-        orgId: "org-1",
-        name: "platform",
-        displayName: "Platform",
-        createdAt: "2026-06-12T10:00:00Z",
-        updatedAt: "2026-06-12T10:00:00Z",
-      })
-      vi.mocked(teamRepo.listTeams).mockResolvedValue([
-        { id: "team-1", orgId: "org-1", name: "platform", displayName: "Platform", createdAt: "", updatedAt: "" },
-      ])
-      vi.mocked(repoMetadata.listByTeam).mockResolvedValue(
-        Array.from({ length: 5 }, (_, i) => ({
-          id: `repo-${i}`,
-          orgId: "org-1",
-          teamId: "team-1",
-          name: `repo-${i}`,
-          forgejoFullName: `org-1/repo-${i}`,
-          cloneUrl: "",
-          sshUrl: "",
-          gatedBranches: ["main"],
-          createdAt: "",
-          updatedAt: "",
-        })),
-      )
-
-      const { status, body } = await request(app, "POST", "/orgs/org-1/repos", {
-        name: "one-too-many",
-        teamId: "team-1",
-      })
-
-      expect(status).toBe(403)
-      expect(body.error).toContain("Plan limit reached")
-    })
   })
 
   describe("GET /orgs/:orgId/repos/:repoId", () => {

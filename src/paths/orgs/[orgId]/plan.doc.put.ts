@@ -14,7 +14,7 @@ export const operation = {
           required: ["plan"],
           properties: {
             plan: { type: "string", enum: ["starter", "team"] },
-            ciBlocks: { type: "integer", minimum: 0, default: 0 },
+            blocks: { type: "integer", minimum: 0, default: 0 },
           },
         },
       },

@@ -31,9 +31,6 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
       ciMinutesUsed: 0,
       ciMinutesLimit: ciLimit,
       storageBytes: 0,
-      userCount: 0,
-      teamCount: 0,
-      repoCount: 0,
     })
     return
   }

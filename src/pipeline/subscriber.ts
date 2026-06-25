@@ -1,6 +1,6 @@
 import type { NatsConnection } from "nats"
 import { StringCodec } from "nats"
-import { PLAN_LIMITS } from "@bloomerab/gittan-types"
+import { BLOCK_ADDITIONS, PLAN_LIMITS } from "@bloomerab/gittan-types"
 
 import type { TForgejoClient } from "../integrations/forgejo.js"
 import type { TRepoMetadataRepo } from "../db/repo-metadata.js"
@@ -91,14 +91,16 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
 
     const plan = await deps.usageRepo.getPlan(pushEvent.orgId)
     const planType = plan?.plan ?? "personal"
-    const storageLimitBytes = PLAN_LIMITS[planType].storageLimitGb * 1024 * 1024 * 1024
+    const blocks = plan?.blocks ?? 0
+    const storageLimitGb = PLAN_LIMITS[planType].storageLimitGb + blocks * BLOCK_ADDITIONS.storageGb
+    const storageLimitBytes = storageLimitGb * 1024 * 1024 * 1024
 
     try {
       const storageBytes = await deps.forgejo.getOrgStorageBytes(pushEvent.orgId)
       if (storageLimitBytes > 0 && storageBytes >= storageLimitBytes) {
         const usedGb = (storageBytes / (1024 * 1024 * 1024)).toFixed(1)
-        console.warn(`Storage quota exceeded for org ${pushEvent.orgId}: ${usedGb}GB/${PLAN_LIMITS[planType].storageLimitGb}GB`)
-        rejectQuota(pushEvent, `Storage quota exceeded (${usedGb}GB/${PLAN_LIMITS[planType].storageLimitGb}GB). Upgrade your plan to continue.`)
+        console.warn(`Storage quota exceeded for org ${pushEvent.orgId}: ${usedGb}GB/${storageLimitGb}GB`)
+        rejectQuota(pushEvent, `Storage quota exceeded (${usedGb}GB/${storageLimitGb}GB). Upgrade your plan to continue.`)
         return
       }
     } catch (err) {

@@ -23,7 +23,7 @@ const createMockUsageRepo = (overrides: Partial<TUsageRepo> = {}): TUsageRepo =>
   getUsage: vi.fn().mockResolvedValue(undefined),
   getUsageHistory: vi.fn().mockResolvedValue([]),
   getEffectiveCiLimit: vi.fn().mockResolvedValue(2000),
-  updateCounts: vi.fn(),
+  listAllOrgUsage: vi.fn().mockResolvedValue([]),
   ...overrides,
 })
 
@@ -35,17 +35,14 @@ const mockDb = {
   batch: vi.fn(),
 } as any
 
-const stubDeps = (usageRepo: TUsageRepo, overrides?: { members?: unknown[]; teams?: unknown[] }) => {
+const stubDeps = (usageRepo: TUsageRepo) => {
   initDeps({
     config: {} as any,
     db: mockDb,
     nats: {} as any,
     orgRepo: {} as any,
-    memberRepo: {
-      ...createMockMemberRepo(),
-      getMembers: vi.fn().mockResolvedValue(overrides?.members ?? []),
-    },
-    teamRepo: { listTeams: vi.fn().mockResolvedValue(overrides?.teams ?? []) } as any,
+    memberRepo: createMockMemberRepo(),
+    teamRepo: { listTeams: vi.fn().mockResolvedValue([]) } as any,
     repoMetadata: { listByTeam: vi.fn().mockResolvedValue([]) } as any,
     usageRepo,
     stepRegistry: {} as any,
@@ -111,8 +108,8 @@ describe("usage routes", () => {
       expect(status).toBe(200)
       expect(body.plan).toBe("personal")
       expect(body.ciMinutesLimit).toBe(50)
-      expect(body.storageLimitGb).toBe(5)
-      expect(body.userLimit).toBe(1)
+      expect(body.storageLimitGb).toBe(1)
+      expect(body.aiEnabled).toBe(false)
     })
 
     it("returns plan with effective CI limit including blocks", async () => {
@@ -120,7 +117,7 @@ describe("usage routes", () => {
         getPlan: vi.fn().mockResolvedValue({
           orgId: "org-1",
           plan: "team",
-          ciBlocks: 2,
+          blocks: 2,
           createdAt: "2026-06-17T10:00:00Z",
           updatedAt: "2026-06-17T10:00:00Z",
         }),
@@ -141,7 +138,7 @@ describe("usage routes", () => {
       const setPlan = vi.fn().mockResolvedValue({
         orgId: "org-1",
         plan: "team",
-        ciBlocks: 1,
+        blocks: 1,
         createdAt: "2026-06-17T10:00:00Z",
         updatedAt: "2026-06-17T10:00:00Z",
       })
@@ -151,7 +148,7 @@ describe("usage routes", () => {
 
       const { status } = await request(app, "PUT", "/orgs/org-1/plan", {
         plan: "team",
-        ciBlocks: 1,
+        blocks: 1,
       })
 
       expect(status).toBe(200)
@@ -166,19 +163,33 @@ describe("usage routes", () => {
       expect(status).toBe(400)
     })
 
-    it("rejects downgrade when usage exceeds new plan limits", async () => {
+    it("rejects downgrade when storage exceeds new plan limits", async () => {
       repo = createMockUsageRepo({
         getPlan: vi.fn().mockResolvedValue({
           orgId: "org-1",
           plan: "team",
-          ciBlocks: 0,
+          blocks: 0,
           createdAt: "2026-06-17T10:00:00Z",
           updatedAt: "2026-06-17T10:00:00Z",
         }),
       })
-      stubDeps(repo, {
-        members: Array.from({ length: 10 }, (_, i) => ({ userId: `u-${i}`, orgId: "org-1", role: "member", joinedAt: "" })),
-        teams: Array.from({ length: 5 }, (_, i) => ({ id: `t-${i}`, orgId: "org-1", name: `team-${i}`, displayName: `Team ${i}`, createdAt: "", updatedAt: "" })),
+      stubDeps(repo)
+      initDeps({
+        config: {} as any,
+        db: mockDb,
+        nats: {} as any,
+        orgRepo: {} as any,
+        memberRepo: {
+          ...createMockMemberRepo(),
+          getMembers: vi.fn().mockResolvedValue([]),
+        },
+        teamRepo: { listTeams: vi.fn().mockResolvedValue([]) } as any,
+        repoMetadata: { listByTeam: vi.fn().mockResolvedValue([]) } as any,
+        usageRepo: repo,
+        stepRegistry: {} as any,
+        policyRepo: {} as any,
+        auditRepo: {} as any,
+        forgejo: { getOrgStorageBytes: vi.fn().mockResolvedValue(10 * 1024 * 1024 * 1024) } as any,
       })
       app = createTestApp()
 
@@ -195,7 +206,7 @@ describe("usage routes", () => {
       const setPlan = vi.fn().mockResolvedValue({
         orgId: "org-1",
         plan: "starter",
-        ciBlocks: 0,
+        blocks: 0,
         createdAt: "2026-06-17T10:00:00Z",
         updatedAt: "2026-06-17T10:00:00Z",
       })
@@ -203,7 +214,7 @@ describe("usage routes", () => {
         getPlan: vi.fn().mockResolvedValue({
           orgId: "org-1",
           plan: "team",
-          ciBlocks: 0,
+          blocks: 0,
           createdAt: "2026-06-17T10:00:00Z",
           updatedAt: "2026-06-17T10:00:00Z",
         }),
@@ -236,9 +247,6 @@ describe("usage routes", () => {
           month: "2026-06",
           ciMinutesUsed: 450,
           storageBytes: 5_000_000_000,
-          userCount: 2,
-          teamCount: 1,
-          repoCount: 3,
           updatedAt: "2026-06-17T10:00:00Z",
         }),
         getEffectiveCiLimit: vi.fn().mockResolvedValue(10_000),

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@bloomerab/gittan-types':
-        specifier: ^0.5.2
-        version: 0.5.2
+        specifier: ^0.6.0
+        version: 0.6.0
       '@bloomerab/npm-api-essentials':
         specifier: ^1.3.0
         version: 1.3.0(ajv@8.20.0)
@@ -52,8 +52,8 @@ packages:
     resolution: {integrity: sha512-60vepv88RwcJtSHrD6MjIL6Ta3SOYbgfnkHb+ppAVK+o9mXprRtulx7VlRl3lN3bbvysAfCS7WMVfhUYemB0IQ==}
     engines: {node: '>= 16'}
 
-  '@bloomerab/gittan-types@0.5.2':
-    resolution: {integrity: sha512-FW1jx2GQLgnaVPsXfXbrb1o1yNneiLdkBPXToILPGez+Jl7N2UhMl40ZX058cR/hUZvWUHI7Oqmij3qhctlTQw==, tarball: https://npm.pkg.github.com/download/@bloomerab/gittan-types/0.5.2/8b4e49ccdd66821f52016a0b8e1c970b6d7dfd3b}
+  '@bloomerab/gittan-types@0.6.0':
+    resolution: {integrity: sha512-ffy6O3uewhakHbDzK3eCvZq/eUS/hPhQGi/+jOugnu9k7wVTdm7nvCvzuzXDlPRouBsnzX3wf39PJWqyfbgkCg==, tarball: https://npm.pkg.github.com/download/@bloomerab/gittan-types/0.6.0/c81b16653564fcabaeb4d3e8ce80dfed32e43540}
 
   '@bloomerab/npm-api-essentials@1.3.0':
     resolution: {integrity: sha512-VLj63O57QPkX6TpYyULtJDF1l//QWqovFwR5u3EGZFp+FBa/Urib7XklPNHDDy2u8lw26W/b2315hlIlcZmYfQ==, tarball: https://npm.pkg.github.com/download/@bloomerab/npm-api-essentials/1.3.0/6336e3af13e2625f72cd3b62b8fd1f5ac534e6bb}
@@ -1481,7 +1481,7 @@ snapshots:
       '@types/json-schema': 7.0.15
       js-yaml: 4.2.0
 
-  '@bloomerab/gittan-types@0.5.2':
+  '@bloomerab/gittan-types@0.6.0':
     dependencies:
       zod: 3.25.76
 

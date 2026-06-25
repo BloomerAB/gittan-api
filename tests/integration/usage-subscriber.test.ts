@@ -28,7 +28,7 @@ describe("usage subscriber (integration)", () => {
       getUsage: vi.fn(),
       getUsageHistory: vi.fn(),
       getEffectiveCiLimit: vi.fn(),
-      updateCounts: vi.fn(),
+      listAllOrgUsage: vi.fn().mockResolvedValue([]),
     }
 
     startUsageSubscriber({ nats, usageRepo: mockUsageRepo })
@@ -71,7 +71,7 @@ describe("usage subscriber (integration)", () => {
       getUsage: vi.fn(),
       getUsageHistory: vi.fn(),
       getEffectiveCiLimit: vi.fn(),
-      updateCounts: vi.fn(),
+      listAllOrgUsage: vi.fn().mockResolvedValue([]),
     }
 
     startUsageSubscriber({ nats, usageRepo: mockUsageRepo })

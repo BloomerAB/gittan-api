@@ -174,7 +174,7 @@ export const CREATE_TABLES = [
   `CREATE TABLE IF NOT EXISTS ${KEYSPACE}.org_plans (
     org_id text PRIMARY KEY,
     plan text,
-    ci_blocks int,
+    blocks int,
     billing_email text,
     created_at timestamp,
     updated_at timestamp
@@ -199,9 +199,6 @@ export const CREATE_TABLES = [
     month text,
     ci_minutes_used int,
     storage_bytes bigint,
-    user_count int,
-    team_count int,
-    repo_count int,
     updated_at timestamp,
     PRIMARY KEY (org_id, month)
   ) WITH CLUSTERING ORDER BY (month DESC)`,
