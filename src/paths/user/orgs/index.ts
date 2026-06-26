@@ -24,6 +24,7 @@ export const GET = async (req: Request, res: Response): Promise<void> => {
         displayName: org.displayName,
         role: m.role,
         plan: "starter" as const,
+        pipelineScope: org.pipelineScope,
         oidcIssuer: org.oidcIssuer,
         mandatorySso: org.mandatorySso,
         ssoEmailDomain: org.ssoEmailDomain,
