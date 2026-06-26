@@ -21,6 +21,7 @@ const ConfigSchema = z.object({
   oauth2ClientSecret: z.string().min(1),
 
   emailApiUrl: z.string().url().optional(),
+  cliBaseUrl: z.string().url().default("https://cli.gittan.eu"),
 })
 
 export type TConfig = z.infer<typeof ConfigSchema>
@@ -44,6 +45,7 @@ export const loadConfig = (): TConfig => {
     oauth2ClientId: env("OAUTH2_CLIENT_ID"),
     oauth2ClientSecret: env("OAUTH2_CLIENT_SECRET"),
     emailApiUrl: env("EMAIL_API_URL"),
+    cliBaseUrl: env("CLI_BASE_URL"),
   })
 
   if (!result.success) {

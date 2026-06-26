@@ -19,6 +19,9 @@ const UNPROTECTED_PREFIXES = [
   "/api-definition",
   "/metrics",
   "/hooks/",
+  "/cli/install",
+  "/cli/dl/",
+  "/cli/versions",
 ] as const
 
 const isUnprotectedRoute = (path: string): boolean =>

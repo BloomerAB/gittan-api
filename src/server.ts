@@ -7,6 +7,7 @@ import { setupApp } from "@bloomerab/npm-api-essentials"
 import apiDoc from "./api-definition.js"
 import { createBearerTokenMiddleware } from "./auth/bearer-token-middleware.js"
 import type { TConfig } from "./config/index.js"
+import { generateInstallScript, resolveLatestCliVersion, listCliVersions } from "./cli/distribution.js"
 
 export type THealthDependency = {
   readonly name: string
@@ -74,6 +75,102 @@ export const createServer = async (
   const app = express()
   app.use(createBearerTokenMiddleware(config))
   app.use(innerApp)
+
+  app.get("/cli/install", (_req: Request, res: Response) => {
+    const baseUrl = config.cliBaseUrl ?? "https://cli.gittan.eu"
+    const script = generateInstallScript(baseUrl)
+    res.setHeader("Content-Type", "text/plain; charset=utf-8")
+    res.send(script)
+  })
+
+  app.get("/cli/dl/:version/:filename", async (req: Request, res: Response) => {
+    if (!config.forgejoAdminToken) {
+      res.status(503).json({ error: "CLI downloads not configured" })
+      return
+    }
+
+    const version = Array.isArray(req.params.version)
+      ? req.params.version[0]
+      : req.params.version
+    const filename = Array.isArray(req.params.filename)
+      ? req.params.filename[0]
+      : req.params.filename
+
+    if (!version || !filename) {
+      res.status(400).json({ error: "Missing version or filename" })
+      return
+    }
+
+    const SEMVER = /^(latest|v?\d+\.\d+\.\d+(-[\w.]+)?)$/
+    if (!SEMVER.test(version)) {
+      res.status(400).json({ error: "Invalid version format" })
+      return
+    }
+
+    if (!/^gittan-[\w-]+\.tar\.gz$/.test(filename)) {
+      res.status(400).json({ error: "Invalid filename" })
+      return
+    }
+
+    const resolvedVersion = version === "latest"
+      ? await resolveLatestCliVersion(config)
+      : version.replace(/^v/, "")
+
+    if (!resolvedVersion || !/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(resolvedVersion)) {
+      res.status(404).json({ error: "No CLI versions found" })
+      return
+    }
+
+    const forgejoUrl = `${config.forgejoUrl}/api/packages/gittan/generic/cli/${resolvedVersion}/${filename}`
+
+    try {
+      const upstream = await fetch(forgejoUrl, {
+        headers: { Authorization: `token ${config.forgejoAdminToken}` },
+      })
+
+      if (!upstream.ok) {
+        res.status(upstream.status === 404 ? 404 : 502).json({
+          error: upstream.status === 404
+            ? `Version ${resolvedVersion} not found`
+            : "Failed to fetch binary",
+        })
+        return
+      }
+
+      const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_")
+      res.setHeader("Content-Type", "application/gzip")
+      res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}"`)
+
+      const body = upstream.body
+      if (body) {
+        const { Readable } = await import("node:stream")
+        const readable = Readable.fromWeb(body as never)
+        readable.pipe(res)
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error"
+      console.error("CLI download proxy failed:", message)
+      if (!res.headersSent) {
+        res.status(502).json({ error: "Failed to proxy binary download" })
+      }
+    }
+  })
+
+  app.get("/cli/versions", async (_req: Request, res: Response) => {
+    if (!config.forgejoAdminToken) {
+      res.status(503).json({ error: "CLI downloads not configured" })
+      return
+    }
+
+    try {
+      const versions = await listCliVersions(config)
+      res.json({ versions })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error"
+      console.error("CLI version listing failed:", message)
+      res.status(502).json({ error: "Failed to list versions" })
+    }
+  })
 
   app.get("/readyz", async (_req: Request, res: Response) => {
     const results = await Promise.all(
