@@ -38,6 +38,7 @@ export const startResultSubscriber = (deps: TResultSubscriberDeps): void => {
     for await (const msg of sub) {
       try {
         const result: TPipelineResultMessage = JSON.parse(sc.decode(msg.data))
+        console.log(`Pipeline result received: repoId=${result.repoId} orgId=${result.orgId} teamId=${result.teamId} pushEventId=${result.pushEventId} status=${result.status} steps=${result.steps?.length} startedAt=${result.startedAt} finishedAt=${result.finishedAt}`)
 
         const run: TPipelineRunRow = {
           id: result.pushEventId,

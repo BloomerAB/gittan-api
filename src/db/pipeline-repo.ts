@@ -58,37 +58,38 @@ const rowToSummary = (row: Record<string, unknown>): TPipelineRunSummary => ({
 
 export const createPipelineRepo = (client: Client) => ({
   save: async (run: TPipelineRunRow): Promise<void> => {
-    await client.batch(
+    const startedAt = new Date(run.startedAt)
+    const finishedAt = new Date(run.finishedAt)
+
+    await client.execute(
+      `INSERT INTO ${KEYSPACE}.pipeline_runs (id, repo_id, push_event_id, org_id, team_id, branch, status, steps, started_at, finished_at, resolved_from)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        {
-          query: `INSERT INTO ${KEYSPACE}.pipeline_runs (id, repo_id, push_event_id, org_id, team_id, branch, status, steps, started_at, finished_at, resolved_from)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          params: [
-            run.id,
-            run.repoId,
-            run.pushEventId,
-            run.orgId,
-            run.teamId,
-            run.branch,
-            run.status,
-            JSON.stringify(run.steps),
-            new Date(run.startedAt),
-            new Date(run.finishedAt),
-            run.resolvedFrom ?? null,
-          ],
-        },
-        {
-          query: `INSERT INTO ${KEYSPACE}.pipeline_runs_by_team (team_id, started_at, run_id, repo_id, branch, status)
-                  VALUES (?, ?, ?, ?, ?, ?)`,
-          params: [
-            run.teamId,
-            new Date(run.startedAt),
-            run.id,
-            run.repoId,
-            run.branch,
-            run.status,
-          ],
-        },
+        run.id,
+        run.repoId,
+        run.pushEventId,
+        run.orgId,
+        run.teamId,
+        run.branch,
+        run.status,
+        JSON.stringify(run.steps),
+        startedAt,
+        finishedAt,
+        run.resolvedFrom ?? "",
+      ],
+      { prepare: true },
+    )
+
+    await client.execute(
+      `INSERT INTO ${KEYSPACE}.pipeline_runs_by_team (team_id, started_at, run_id, repo_id, branch, status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        run.teamId,
+        startedAt,
+        run.id,
+        run.repoId,
+        run.branch,
+        run.status,
       ],
       { prepare: true },
     )
