@@ -73,8 +73,6 @@ export const createServer = async (
   // Express runs middleware in registration order, so our bearer token check
   // executes before the OpenAPI backend's request handler.
   const app = express()
-  app.use(createBearerTokenMiddleware(config))
-  app.use(innerApp)
 
   app.get("/cli/install", (_req: Request, res: Response) => {
     const baseUrl = config.cliBaseUrl ?? "https://cli.gittan.eu"
@@ -171,6 +169,9 @@ export const createServer = async (
       res.status(502).json({ error: "Failed to list versions" })
     }
   })
+
+  app.use(createBearerTokenMiddleware(config))
+  app.use(innerApp)
 
   app.get("/readyz", async (_req: Request, res: Response) => {
     const results = await Promise.all(
