@@ -3,11 +3,14 @@ import { StringCodec } from "nats"
 import { BLOCK_ADDITIONS, PLAN_LIMITS, spendingCapToBlocks } from "@bloomerab/gittan-types"
 
 import type { TAlertRepo } from "../db/alert-repo.js"
+import type { TPolicyRepo } from "../db/policy-repo.js"
 import type { TRepoMetadataRepo } from "../db/repo-metadata.js"
+import type { TStepRegistry } from "../db/step-registry.js"
 import type { TUsageRepo } from "../db/usage-repo.js"
 import type { TEmailClient } from "../integrations/email.js"
 import type { TForgejoClient } from "../integrations/forgejo.js"
 import { checkUsageAlerts } from "../lib/usage-alerts.js"
+import { isConfigRepo, syncConfigRepo } from "./config-repo.js"
 import { resolvePipeline, type TResolvedPipeline } from "./resolver.js"
 
 export type TPushEventMessage = {
@@ -40,6 +43,8 @@ export type TSubscriberDeps = {
   readonly alertRepo: TAlertRepo
   readonly email: TEmailClient
   readonly forgejo: TForgejoClient
+  readonly stepRegistry: TStepRegistry
+  readonly policyRepo: TPolicyRepo
   readonly getOrgName: (orgId: string) => Promise<string>
   readonly getReceiptEmail: (orgId: string) => Promise<string | undefined>
   readonly getPolicies: (orgId: string) => Promise<ReadonlyArray<import("@bloomerab/gittan-types").TOrgPolicy>>
@@ -84,6 +89,30 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
 
   const handlePush = async (data: Uint8Array): Promise<void> => {
     const pushEvent: TPushEventMessage = JSON.parse(sc.decode(data))
+
+    if (isConfigRepo(pushEvent.repoName)) {
+      try {
+        const result = await syncConfigRepo(
+          deps.forgejo, pushEvent.orgId, pushEvent.repoName,
+          deps.stepRegistry, deps.policyRepo,
+        )
+        console.info(
+          `Config repo synced for org ${pushEvent.orgId}: ` +
+          `${result.steps.synced} steps, ${result.policies.synced} policies` +
+          (result.steps.errors.length + result.policies.errors.length > 0
+            ? `, errors: ${[...result.steps.errors, ...result.policies.errors].join("; ")}`
+            : ""),
+        )
+        deps.nats.publish("gittan.config.synced", sc.encode(JSON.stringify({
+          orgId: pushEvent.orgId,
+          repoName: pushEvent.repoName,
+          result,
+        })))
+      } catch (err) {
+        console.error(`Failed to sync config repo for org ${pushEvent.orgId}:`, err)
+      }
+      return
+    }
 
     const [ciLimit, usage] = await Promise.all([
       deps.usageRepo.getEffectiveCiLimit(pushEvent.orgId),

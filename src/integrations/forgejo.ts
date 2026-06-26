@@ -196,6 +196,104 @@ export const createForgejoClient = (config: TConfig) => {
       return repoBytes + packageBytes
     },
 
+    getFileContent: async (
+      orgName: string,
+      repoName: string,
+      filePath: string,
+      ref = "main",
+    ): Promise<string | undefined> => {
+      try {
+        const raw = await request<{ content: string; encoding: string }>(
+          "GET",
+          `/repos/${orgName}/${repoName}/contents/${filePath}?ref=${ref}`,
+        )
+        if (raw.encoding === "base64") {
+          return Buffer.from(raw.content, "base64").toString("utf-8")
+        }
+        return raw.content
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("404")) return undefined
+        throw err
+      }
+    },
+
+    listDirectory: async (
+      orgName: string,
+      repoName: string,
+      dirPath: string,
+      ref = "main",
+    ): Promise<ReadonlyArray<{ name: string; type: string }>> => {
+      try {
+        return await request<ReadonlyArray<{ name: string; type: string }>>(
+          "GET",
+          `/repos/${orgName}/${repoName}/contents/${dirPath}?ref=${ref}`,
+        )
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("404")) return []
+        throw err
+      }
+    },
+
+    createFileCommit: async (
+      orgName: string,
+      repoName: string,
+      filePath: string,
+      content: string,
+      message: string,
+    ): Promise<void> => {
+      const encoded = Buffer.from(content, "utf-8").toString("base64")
+      await request("POST", `/repos/${orgName}/${repoName}/contents/${filePath}`, {
+        content: encoded,
+        message,
+      })
+    },
+
+    updateFileCommit: async (
+      orgName: string,
+      repoName: string,
+      filePath: string,
+      content: string,
+      sha: string,
+      message: string,
+    ): Promise<void> => {
+      const encoded = Buffer.from(content, "utf-8").toString("base64")
+      await request("PUT", `/repos/${orgName}/${repoName}/contents/${filePath}`, {
+        content: encoded,
+        sha,
+        message,
+      })
+    },
+
+    deleteFile: async (
+      orgName: string,
+      repoName: string,
+      filePath: string,
+      sha: string,
+      message: string,
+    ): Promise<void> => {
+      await request("DELETE", `/repos/${orgName}/${repoName}/contents/${filePath}`, {
+        sha,
+        message,
+      })
+    },
+
+    getFileSha: async (
+      orgName: string,
+      repoName: string,
+      filePath: string,
+    ): Promise<string | undefined> => {
+      try {
+        const raw = await request<{ sha: string }>(
+          "GET",
+          `/repos/${orgName}/${repoName}/contents/${filePath}`,
+        )
+        return raw.sha
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("404")) return undefined
+        throw err
+      }
+    },
+
     healthy: async (): Promise<boolean> => {
       try {
         await request("GET", "/version")

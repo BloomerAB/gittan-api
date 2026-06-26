@@ -2,10 +2,13 @@ import type { Client } from "cassandra-driver"
 
 import { KEYSPACE } from "./schema.js"
 
+export type TPipelineScope = "org" | "team"
+
 export type TOrg = {
   readonly id: string
   readonly name: string
   readonly displayName: string
+  readonly pipelineScope: TPipelineScope
   readonly oidcIssuer?: string
   readonly oidcClientId?: string
   readonly oidcClientSecret?: string
@@ -27,6 +30,7 @@ export type TCreateOrgInput = {
 
 export type TUpdateOrgInput = {
   readonly displayName?: string
+  readonly pipelineScope?: TPipelineScope
   readonly oidcIssuer?: string | null
   readonly oidcClientId?: string | null
   readonly oidcClientSecret?: string | null
@@ -42,6 +46,7 @@ const rowToOrg = (row: Record<string, unknown>): TOrg => ({
   id: row.id as string,
   name: row.name as string,
   displayName: row.display_name as string,
+  pipelineScope: ((row.pipeline_scope as string | null) ?? "org") as TPipelineScope,
   oidcIssuer: (row.oidc_issuer as string | null) ?? undefined,
   oidcClientId: (row.oidc_client_id as string | null) ?? undefined,
   oidcClientSecret: (row.oidc_client_secret as string | null) ?? undefined,
@@ -87,6 +92,7 @@ export const createOrgRepo = (client: Client) => ({
       id: input.id,
       name: input.name,
       displayName: input.displayName,
+      pipelineScope: "org" as TPipelineScope,
       mandatorySso: false,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -120,6 +126,7 @@ export const createOrgRepo = (client: Client) => ({
       inputVal !== undefined ? inputVal : (row[field] as string | null) ?? null
 
     const displayName = input.displayName ?? (row.display_name as string)
+    const pipelineScope = input.pipelineScope ?? ((row.pipeline_scope as string | null) ?? "org")
     const oidcIssuer = resolve("oidc_issuer", input.oidcIssuer)
     const oidcClientId = resolve("oidc_client_id", input.oidcClientId)
     const oidcClientSecret = resolve("oidc_client_secret", input.oidcClientSecret)
@@ -132,12 +139,13 @@ export const createOrgRepo = (client: Client) => ({
 
     await client.execute(
       `UPDATE ${KEYSPACE}.orgs
-       SET display_name = ?, oidc_issuer = ?, oidc_client_id = ?, oidc_client_secret = ?,
+       SET display_name = ?, pipeline_scope = ?,
+           oidc_issuer = ?, oidc_client_id = ?, oidc_client_secret = ?,
            mandatory_sso = ?, sso_email_domain = ?,
            slack_client_id = ?, slack_client_secret = ?, slack_bot_token = ?, slack_team_name = ?,
            updated_at = ?
        WHERE id = ?`,
-      [displayName, oidcIssuer, oidcClientId, oidcClientSecret, mandatorySso, ssoEmailDomain, slackClientId, slackClientSecret, slackBotToken, slackTeamName, now, id],
+      [displayName, pipelineScope, oidcIssuer, oidcClientId, oidcClientSecret, mandatorySso, ssoEmailDomain, slackClientId, slackClientSecret, slackBotToken, slackTeamName, now, id],
       { prepare: true },
     )
 
@@ -145,6 +153,7 @@ export const createOrgRepo = (client: Client) => ({
       id,
       name: row.name as string,
       displayName,
+      pipelineScope: pipelineScope as TPipelineScope,
       oidcIssuer: oidcIssuer ?? undefined,
       oidcClientId: oidcClientId ?? undefined,
       oidcClientSecret: oidcClientSecret ?? undefined,

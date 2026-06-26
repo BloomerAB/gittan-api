@@ -34,6 +34,7 @@ export const CREATE_TABLES = [
     id text PRIMARY KEY,
     name text,
     display_name text,
+    pipeline_scope text,
     oidc_issuer text,
     oidc_client_id text,
     oidc_client_secret text,

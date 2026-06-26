@@ -54,6 +54,25 @@ export const assertOrgAccess = async (
   return true
 }
 
+export const assertOrgOwner = async (
+  req: Request,
+  res: Response,
+  paramName = "orgId",
+): Promise<boolean> => {
+  const user = getAuthUser(req)
+  const orgId = param(req, paramName)
+
+  const { memberRepo } = deps()
+  const membership = await memberRepo.getMembership(orgId, user.id)
+
+  if (!membership || membership.role !== "owner") {
+    res.status(403).json({ error: "Organization owner access required" })
+    return false
+  }
+
+  return true
+}
+
 export const assertPlatformAdmin = async (
   req: Request,
   res: Response,
@@ -62,7 +81,7 @@ export const assertPlatformAdmin = async (
   const { memberRepo } = deps()
 
   const memberships = await memberRepo.getUserOrgIds(user.id)
-  const isBloomerOwner = memberships.some((m) => m.orgId === "bloomer" || m.role === "owner")
+  const isBloomerOwner = memberships.some((m) => m.orgId === "bloomer" && m.role === "owner")
 
   if (!isBloomerOwner) {
     res.status(403).json({ error: "Platform admin access required" })
