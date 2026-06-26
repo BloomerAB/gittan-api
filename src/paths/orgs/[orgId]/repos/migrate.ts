@@ -42,10 +42,14 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
     return
   }
 
-  const existing = await forgejo.getRepo(orgId, repoName)
-  if (existing) {
-    res.status(409).json({ error: `Repository '${repoName}' already exists` })
-    return
+  const existingForgejo = await forgejo.getRepo(orgId, repoName)
+  if (existingForgejo) {
+    const existingMeta = await repoMetadata.getByForgejoName(`${orgId}/${repoName}`)
+    if (existingMeta) {
+      res.status(409).json({ error: `Repository '${repoName}' already exists` })
+      return
+    }
+    await forgejo.deleteRepo(orgId, repoName)
   }
 
   let forgejoOrg = await forgejo.getOrg(orgId)
@@ -81,6 +85,8 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
 
     res.status(201).json({ ...metadata, migratedFrom: githubUrl })
   } catch (err) {
+    try { await forgejo.deleteRepo(orgId, repoName) } catch { /* best-effort cleanup */ }
+
     const message = err instanceof Error ? err.message : "Migration failed"
     if (message.includes("409") || message.includes("already exists")) {
       res.status(409).json({ error: `Repository '${repoName}' already exists in Forgejo` })
