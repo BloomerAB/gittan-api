@@ -70,11 +70,13 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
   const id = randomUUID()
   const now = new Date()
 
+  const forgejoUsername = `gt-${id.replace(/-/g, "").slice(0, 16)}`
+
   await db.batch(
     [
       {
-        query: `INSERT INTO ${KEYSPACE}.users (id, email, name, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        params: [id, email, name, "member", true, now, now],
+        query: `INSERT INTO ${KEYSPACE}.users (id, email, name, role, is_active, forgejo_username, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [id, email, name, "member", true, forgejoUsername, now, now],
       },
       {
         query: `INSERT INTO ${KEYSPACE}.users_by_email (email, user_id) VALUES (?, ?)`,
@@ -83,6 +85,13 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
     ],
     { prepare: true },
   )
+
+  const { forgejo } = deps()
+  try {
+    await forgejo.createUser({ username: forgejoUsername, email, fullName: name })
+  } catch (err) {
+    console.error("Failed to create Forgejo user:", err)
+  }
 
   let orgId = ""
   try {

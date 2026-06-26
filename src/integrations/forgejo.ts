@@ -294,6 +294,55 @@ export const createForgejoClient = (config: TConfig) => {
       }
     },
 
+    createUser: async (input: {
+      readonly username: string
+      readonly email: string
+      readonly fullName: string
+    }): Promise<{ id: number; login: string }> =>
+      request("POST", "/admin/users", {
+        username: input.username,
+        email: input.email,
+        full_name: input.fullName,
+        login_name: input.username,
+        must_change_password: false,
+        password: crypto.randomUUID() + crypto.randomUUID(),
+        visibility: "private",
+      }),
+
+    getUser: async (username: string): Promise<{ id: number; login: string } | undefined> => {
+      try {
+        return await request("GET", `/users/${encodeURIComponent(username)}`)
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("404")) return undefined
+        throw err
+      }
+    },
+
+    listUserSSHKeys: async (username: string): Promise<ReadonlyArray<{
+      readonly id: number
+      readonly title: string
+      readonly key: string
+      readonly fingerprint: string
+      readonly created_at: string
+    }>> =>
+      request("GET", `/users/${encodeURIComponent(username)}/keys`),
+
+    addUserSSHKey: async (username: string, title: string, key: string): Promise<{
+      readonly id: number
+      readonly title: string
+      readonly key: string
+      readonly fingerprint: string
+      readonly created_at: string
+    }> =>
+      request("POST", `/admin/users/${encodeURIComponent(username)}/keys`, { title, key }),
+
+    deleteUserSSHKey: async (username: string, keyId: number): Promise<void> =>
+      request("DELETE", `/admin/users/${encodeURIComponent(username)}/keys/${keyId}`),
+
+    addOrgMember: async (orgName: string, username: string): Promise<void> => {
+      await request("PUT", `/orgs/${encodeURIComponent(orgName)}/members/${encodeURIComponent(username)}`)
+    },
+
     healthy: async (): Promise<boolean> => {
       try {
         await request("GET", "/version")

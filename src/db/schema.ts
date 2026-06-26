@@ -13,6 +13,7 @@ export const CREATE_TABLES = [
     org_id text,
     role text,
     is_active boolean,
+    forgejo_username text,
     created_at timestamp,
     updated_at timestamp
   )`,
