@@ -77,7 +77,7 @@ export const createPipelineRepo = (client: Client) => ({
         finishedAt,
         run.resolvedFrom ?? "",
       ],
-      { prepare: true },
+      { prepare: true, isIdempotent: true },
     )
 
     await client.execute(
@@ -91,7 +91,7 @@ export const createPipelineRepo = (client: Client) => ({
         run.branch,
         run.status,
       ],
-      { prepare: true },
+      { prepare: true, isIdempotent: true },
     )
   },
 
