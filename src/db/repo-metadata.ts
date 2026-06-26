@@ -105,6 +105,29 @@ export const createRepoMetadataRepo = (client: Client) => ({
     return rowToRepo(result.first())
   },
 
+  delete: async (orgId: string, repoId: string): Promise<void> => {
+    const repo = await client.execute(
+      `SELECT * FROM ${KEYSPACE}.repos WHERE org_id = ? AND id = ?`,
+      [orgId, repoId],
+      { prepare: true },
+    )
+
+    if (repo.rowLength === 0) return
+
+    const row = repo.first()
+    const teamId = row.team_id as string
+    const forgejoFullName = row.forgejo_full_name as string
+
+    await client.batch(
+      [
+        { query: `DELETE FROM ${KEYSPACE}.repos WHERE org_id = ? AND id = ?`, params: [orgId, repoId] },
+        { query: `DELETE FROM ${KEYSPACE}.repos_by_team WHERE team_id = ? AND id = ?`, params: [teamId, repoId] },
+        { query: `DELETE FROM ${KEYSPACE}.repos_by_forgejo_name WHERE forgejo_full_name = ?`, params: [forgejoFullName] },
+      ],
+      { prepare: true },
+    )
+  },
+
   listByTeam: async (teamId: string): Promise<ReadonlyArray<TRepoMetadata>> => {
     const result = await client.execute(
       `SELECT * FROM ${KEYSPACE}.repos_by_team WHERE team_id = ?`,

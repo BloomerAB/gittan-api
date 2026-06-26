@@ -14,6 +14,7 @@ const MigrateRepoBody = z.object({
   teamId: z.string().min(1),
   private: z.boolean().default(true),
   gatedBranches: z.array(z.string()).default(["main"]),
+  update: z.boolean().default(false),
 })
 
 const extractRepoName = (githubUrl: string): string => {
@@ -32,7 +33,7 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
   }
 
   const orgId = param(req, "orgId")
-  const { githubUrl, githubToken, teamId, gatedBranches } = parsed.data
+  const { githubUrl, githubToken, teamId, gatedBranches, update } = parsed.data
   const isPrivate = parsed.data.private
   const repoName = extractRepoName(githubUrl)
 
@@ -45,11 +46,14 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
   const existingForgejo = await forgejo.getRepo(orgId, repoName)
   if (existingForgejo) {
     const existingMeta = await repoMetadata.getByForgejoName(`${orgId}/${repoName}`)
-    if (existingMeta) {
-      res.status(409).json({ error: `Repository '${repoName}' already exists` })
+    if (existingMeta && !update) {
+      res.status(409).json({ error: `Repository '${repoName}' already exists`, canUpdate: true })
       return
     }
     await forgejo.deleteRepo(orgId, repoName)
+    if (existingMeta) {
+      await repoMetadata.delete(orgId, existingMeta.id)
+    }
   }
 
   let forgejoOrg = await forgejo.getOrg(orgId)
