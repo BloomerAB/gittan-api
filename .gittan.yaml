@@ -1,18 +1,24 @@
 steps:
+  - name: install
+    image: gittan/node:22
+    run: corepack enable && pnpm install --frozen-lockfile
+    cache:
+      - node_modules
+
   - name: typecheck
     image: gittan/node:22
-    run: pnpm typecheck
+    run: corepack enable && pnpm typecheck
+    needs: [install]
 
   - name: test
     image: gittan/node:22
-    run: pnpm test
+    run: corepack enable && pnpm test
+    needs: [install]
 
   - name: build
     image: gittan/node:22
-    run: pnpm build
+    run: corepack enable && pnpm build
     needs: [typecheck, test]
-    cache:
-      - node_modules
 
 gated:
   - main
