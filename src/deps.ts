@@ -7,6 +7,7 @@ import type { TAuditRepo } from "./db/audit-repo.js"
 import type { TInviteRepo } from "./db/invite-repo.js"
 import type { TMemberRepo } from "./db/member-repo.js"
 import type { TOrgRepo } from "./db/org-repo.js"
+import type { TPipelineRepo } from "./db/pipeline-repo.js"
 import type { TPolicyRepo } from "./db/policy-repo.js"
 import type { TReceiptRepo } from "./db/receipt-repo.js"
 import type { TRepoMetadataRepo } from "./db/repo-metadata.js"
@@ -26,6 +27,7 @@ export type TDeps = {
   readonly repoMetadata: TRepoMetadataRepo
   readonly usageRepo: TUsageRepo
   readonly stepRegistry: TStepRegistry
+  readonly pipelineRepo: TPipelineRepo
   readonly policyRepo: TPolicyRepo
   readonly auditRepo: TAuditRepo
   readonly inviteRepo: TInviteRepo

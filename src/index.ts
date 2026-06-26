@@ -8,6 +8,7 @@ import { createInviteRepo } from "./db/invite-repo.js"
 import { initializeSchema } from "./db/client.js"
 import { createMemberRepo } from "./db/member-repo.js"
 import { createOrgRepo } from "./db/org-repo.js"
+import { createPipelineRepo } from "./db/pipeline-repo.js"
 import { createPolicyRepo } from "./db/policy-repo.js"
 import { createReceiptRepo } from "./db/receipt-repo.js"
 import { createRepoMetadataRepo } from "./db/repo-metadata.js"
@@ -17,6 +18,7 @@ import { createUsageRepo } from "./db/usage-repo.js"
 import { initDeps } from "./deps.js"
 import { createEmailClient } from "./integrations/email.js"
 import { createForgejoClient } from "./integrations/forgejo.js"
+import { startResultSubscriber } from "./pipeline/result-subscriber.js"
 import { startUsageSubscriber } from "./pipeline/usage-subscriber.js"
 import { KEYSPACE } from "./db/schema.js"
 import { createServer } from "./server.js"
@@ -87,6 +89,7 @@ const main = async (): Promise<void> => {
   const memberRepo = createMemberRepo(scylla)
   const teamRepo = createTeamRepo(scylla)
   const repoMetadata = createRepoMetadataRepo(scylla)
+  const pipelineRepo = createPipelineRepo(scylla)
   const usageRepo = createUsageRepo(scylla)
   const stepRegistry = createStepRegistry(scylla)
   const policyRepo = createPolicyRepo(scylla)
@@ -107,6 +110,7 @@ const main = async (): Promise<void> => {
     repoMetadata,
     usageRepo,
     stepRegistry,
+    pipelineRepo,
     policyRepo,
     auditRepo,
     inviteRepo,
@@ -119,6 +123,7 @@ const main = async (): Promise<void> => {
   await backfillOrgMembers(scylla)
 
   startUsageSubscriber({ nats, usageRepo })
+  startResultSubscriber({ nats, pipelineRepo })
 
   const app = await createServer(config, [
     {
