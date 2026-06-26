@@ -65,16 +65,20 @@ detect_platform() {
   echo "\${os}-\${arch}"
 }
 
+TMPDIR_CLEANUP=""
+cleanup() { [ -n "\$TMPDIR_CLEANUP" ] && rm -rf "\$TMPDIR_CLEANUP"; }
+trap cleanup EXIT
+
 main() {
-  local platform version tmpdir
+  local platform version
 
   platform="\$(detect_platform)"
   version="\${GITTAN_CLI_VERSION:-latest}"
 
   echo "Installing gittan CLI (\${platform})..."
 
-  tmpdir="\$(mktemp -d)"
-  trap 'rm -rf "\$tmpdir"' EXIT
+  TMPDIR_CLEANUP="\$(mktemp -d)"
+  local tmpdir="\$TMPDIR_CLEANUP"
 
   local url="\${BASE_URL}/dl/\${version}/gittan-\${platform}.tar.gz"
 
