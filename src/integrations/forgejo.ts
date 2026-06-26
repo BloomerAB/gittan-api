@@ -160,6 +160,27 @@ export const createForgejoClient = (config: TConfig) => {
     ): Promise<ReadonlyArray<TForgejoWebhook>> =>
       request("GET", `/repos/${orgName}/${repoName}/hooks`),
 
+    migrateRepo: async (input: {
+      readonly orgName: string
+      readonly repoName: string
+      readonly cloneUrl: string
+      readonly authToken: string
+      readonly isPrivate: boolean
+      readonly description?: string
+    }): Promise<TForgejoRepo> => {
+      const raw = await request<TForgejoRepoRaw>("POST", "/repos/migrate", {
+        clone_addr: input.cloneUrl,
+        auth_token: input.authToken,
+        repo_name: input.repoName,
+        repo_owner: input.orgName,
+        service: "github",
+        mirror: false,
+        private: input.isPrivate,
+        description: input.description ?? "",
+      })
+      return mapRepo(raw)
+    },
+
     getOrgStorageBytes: async (orgName: string): Promise<number> => {
       const repos = await request<TForgejoRepoRaw[]>("GET", `/orgs/${orgName}/repos?limit=50`)
       const repoBytes = repos.reduce((sum, r) => sum + (r.size ?? 0) * 1024, 0)
