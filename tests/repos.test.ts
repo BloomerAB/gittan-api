@@ -173,7 +173,7 @@ describe("repo routes", () => {
       expect(forgejo.createWebhook).toHaveBeenCalledWith(
         "org-1",
         "api-service",
-        "http://localhost:4000/hooks/push",
+        "http://gittan-api.gittan.svc.cluster.local:4000/hooks/push",
         ["push"],
       )
     })
