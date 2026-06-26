@@ -15,7 +15,7 @@ export const resolveLatestCliVersion = async (
 export const listCliVersions = async (
   config: TConfig,
 ): Promise<ReadonlyArray<string>> => {
-  const url = `${config.forgejoUrl}/api/v1/packages/gittan/generic?q=cli&limit=20`
+  const url = `${config.forgejoUrl}/api/v1/packages/${config.forgejoPackageOwner}/generic?q=cli&limit=20`
 
   const res = await fetch(url, {
     headers: { Authorization: `token ${config.forgejoAdminToken}` },

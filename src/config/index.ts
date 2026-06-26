@@ -15,6 +15,7 @@ const ConfigSchema = z.object({
 
   forgejoUrl: z.string().url().default("http://localhost:3333"),
   forgejoAdminToken: z.string().min(1).optional(),
+  forgejoPackageOwner: z.string().min(1).default("gittan"),
 
   oauth2Issuer: z.string().url(),
   oauth2ClientId: z.string().min(1),
@@ -41,6 +42,7 @@ export const loadConfig = (): TConfig => {
     natsUrl: env("NATS_URL"),
     forgejoUrl: env("FORGEJO_URL"),
     forgejoAdminToken: env("FORGEJO_ADMIN_TOKEN"),
+    forgejoPackageOwner: env("FORGEJO_PACKAGE_OWNER"),
     oauth2Issuer: env("OAUTH2_ISSUER"),
     oauth2ClientId: env("OAUTH2_CLIENT_ID"),
     oauth2ClientSecret: env("OAUTH2_CLIENT_SECRET"),

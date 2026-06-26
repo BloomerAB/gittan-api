@@ -121,7 +121,7 @@ export const createServer = async (
       return
     }
 
-    const forgejoUrl = `${config.forgejoUrl}/api/packages/gittan/generic/cli/${resolvedVersion}/${filename}`
+    const forgejoUrl = `${config.forgejoUrl}/api/packages/${config.forgejoPackageOwner}/generic/cli/${resolvedVersion}/${filename}`
 
     try {
       const upstream = await fetch(forgejoUrl, {
