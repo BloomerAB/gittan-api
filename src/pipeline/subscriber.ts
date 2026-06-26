@@ -198,6 +198,8 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
           orgId: pushEvent.orgId,
           teamId: pushEvent.teamId,
           repoId: pushEvent.repoId,
+          repoName: pushEvent.repoName,
+          forgejoFullName: repoMeta?.forgejoFullName ?? `${pushEvent.orgId}/${pushEvent.repoName}`,
           branch: pushEvent.branch,
           isGated: pushEvent.isGated,
           resolved,
