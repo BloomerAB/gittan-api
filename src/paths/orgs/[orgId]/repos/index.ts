@@ -49,7 +49,7 @@ export const POST = async (req: Request, res: Response): Promise<void> => {
     private: isPrivate,
   })
 
-  const webhookBaseUrl = `http://localhost:${config.port}`
+  const webhookBaseUrl = config.webhookBaseUrl ?? `http://gittan-api.gittan.svc.cluster.local:${config.port}`
   await forgejo.createWebhook(orgId, name, `${webhookBaseUrl}/hooks/push`, [
     "push",
   ])

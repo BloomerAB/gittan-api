@@ -21,6 +21,7 @@ const ConfigSchema = z.object({
   oauth2ClientId: z.string().min(1),
   oauth2ClientSecret: z.string().min(1),
 
+  webhookBaseUrl: z.string().url().optional(),
   emailApiUrl: z.string().url().optional(),
   cliBaseUrl: z.string().url().default("https://cli.gittan.eu"),
 })
@@ -46,6 +47,7 @@ export const loadConfig = (): TConfig => {
     oauth2Issuer: env("OAUTH2_ISSUER"),
     oauth2ClientId: env("OAUTH2_CLIENT_ID"),
     oauth2ClientSecret: env("OAUTH2_CLIENT_SECRET"),
+    webhookBaseUrl: env("WEBHOOK_BASE_URL"),
     emailApiUrl: env("EMAIL_API_URL"),
     cliBaseUrl: env("CLI_BASE_URL"),
   })
