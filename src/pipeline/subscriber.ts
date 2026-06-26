@@ -127,7 +127,7 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
 
     const plan = await deps.usageRepo.getPlan(pushEvent.orgId)
     const planType = plan?.plan ?? "personal"
-    const spendingCapEur = plan?.spendingCapEur ?? 0
+    const spendingCapEur = planType === "team" ? (plan?.spendingCapEur ?? 0) : 0
     const blocks = spendingCapToBlocks(spendingCapEur)
     const storageLimitGb = PLAN_LIMITS[planType].storageLimitGb + blocks * BLOCK_ADDITIONS.storageGb
     const storageLimitBytes = storageLimitGb * 1024 * 1024 * 1024

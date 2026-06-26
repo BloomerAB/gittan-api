@@ -57,6 +57,11 @@ export const PUT = async (req: Request, res: Response): Promise<void> => {
 
   const newPlan: TPlanType = parsed.data.plan ?? existing?.plan ?? "personal"
 
+  if (parsed.data.spendingCapEur && parsed.data.spendingCapEur > 0 && newPlan !== "team") {
+    res.status(400).json({ error: "Spending cap is only available on the Team plan" })
+    return
+  }
+
   if (parsed.data.plan && parsed.data.plan !== existing?.plan) {
     const newLimits = PLAN_LIMITS[newPlan]
 
@@ -78,10 +83,14 @@ export const PUT = async (req: Request, res: Response): Promise<void> => {
     }
   }
 
+  const effectiveSpendingCap = newPlan === "team"
+    ? (parsed.data.spendingCapEur ?? existing?.spendingCapEur ?? 0)
+    : 0
+
   const plan = await usageRepo.setPlan(
     orgId,
     newPlan,
-    parsed.data.spendingCapEur ?? existing?.spendingCapEur ?? 0,
+    effectiveSpendingCap,
     parsed.data.receiptEmail,
   )
 

@@ -19,6 +19,7 @@ import { initDeps } from "./deps.js"
 import { createEmailClient } from "./integrations/email.js"
 import { createForgejoClient } from "./integrations/forgejo.js"
 import { startResultSubscriber } from "./pipeline/result-subscriber.js"
+import { startPipelineSubscriber } from "./pipeline/subscriber.js"
 import { startUsageSubscriber } from "./pipeline/usage-subscriber.js"
 import { KEYSPACE } from "./db/schema.js"
 import { createServer } from "./server.js"
@@ -124,6 +125,70 @@ const main = async (): Promise<void> => {
 
   startUsageSubscriber({ nats, usageRepo })
   startResultSubscriber({ nats, pipelineRepo })
+  startPipelineSubscriber({
+    nats,
+    repoMetadata,
+    usageRepo,
+    alertRepo,
+    email,
+    forgejo,
+    stepRegistry,
+    policyRepo,
+    getOrgName: async (orgId) => {
+      const org = await orgRepo.getById(orgId)
+      return org?.name ?? orgId
+    },
+    getReceiptEmail: async (orgId) => {
+      const plan = await usageRepo.getPlan(orgId)
+      return plan?.receiptEmail
+    },
+    getPolicies: async (orgId) => {
+      const policies = await policyRepo.list(orgId)
+      return policies.map((p) => ({
+        id: p.id,
+        orgId: p.orgId,
+        name: p.name,
+        description: p.description,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        enabled: true,
+        match: {
+          name: p.matchName,
+          files: p.matchFiles ? [p.matchFiles] : undefined,
+          team: p.matchTeam,
+        },
+        inject: {
+          before: p.steps.filter((s) => s.position === "before").map((s) => ({ name: s.name, use: s.use, timeout: "10m" })),
+          after: p.steps.filter((s) => s.position === "after").map((s) => ({ name: s.name, use: s.use, timeout: "10m" })),
+        },
+      }))
+    },
+    getTemplate: async () => undefined,
+    getRepoFiles: async (forgejoFullName) => {
+      try {
+        const [orgName, repoName] = forgejoFullName.split("/")
+        const entries = await forgejo.listDirectory(orgName, repoName, "")
+        return entries.map((e) => e.name)
+      } catch {
+        return []
+      }
+    },
+    getRepoConfig: async (forgejoFullName) => {
+      try {
+        const [orgName, repoName] = forgejoFullName.split("/")
+        const content = await forgejo.getFileContent(orgName, repoName, ".gittan.yaml")
+        if (!content) return undefined
+        const { parse } = await import("yaml")
+        const config = parse(content)
+        return config?.steps ? { steps: config.steps } : undefined
+      } catch {
+        return undefined
+      }
+    },
+    onPipelineResolved: async (event) => {
+      console.info(`Pipeline resolved for ${event.pushEvent.repoName} (${event.resolved.steps.length} steps)`)
+    },
+  })
 
   const app = await createServer(config, [
     {
