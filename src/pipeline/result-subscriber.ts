@@ -48,8 +48,8 @@ export const startResultSubscriber = (deps: TResultSubscriberDeps): void => {
           branch: result.branch,
           status: result.status,
           steps: result.steps,
-          startedAt: result.startedAt,
-          finishedAt: result.finishedAt,
+          startedAt: new Date(result.startedAt).toISOString(),
+          finishedAt: new Date(result.finishedAt).toISOString(),
         }
 
         await deps.pipelineRepo.save(run)
