@@ -102,7 +102,9 @@ export const createPipelineRepo = (client: Client) => ({
       { prepare: true },
     )
 
-    return result.rows.map(rowToRun)
+    return result.rows
+      .map(rowToRun)
+      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
   },
 
   getById: async (repoId: string, runId: string): Promise<TPipelineRunRow | undefined> => {
