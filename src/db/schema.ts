@@ -156,6 +156,9 @@ export const CREATE_TABLES = [
     org_id text,
     team_id text,
     branch text,
+    commit_sha text,
+    commit_message text,
+    pusher text,
     status text,
     steps text,
     started_at timestamp,
@@ -287,4 +290,10 @@ export const CREATE_TABLES = [
     sent_at timestamp,
     PRIMARY KEY ((org_id, month), resource, threshold)
   )`,
+] as const
+
+export const MIGRATIONS = [
+  `ALTER TABLE ${KEYSPACE}.pipeline_runs ADD commit_sha text`,
+  `ALTER TABLE ${KEYSPACE}.pipeline_runs ADD commit_message text`,
+  `ALTER TABLE ${KEYSPACE}.pipeline_runs ADD pusher text`,
 ] as const

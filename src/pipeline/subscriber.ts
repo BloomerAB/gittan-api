@@ -190,6 +190,8 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
 
     await deps.onPipelineResolved({ pushEvent, resolved })
 
+    const headCommit = pushEvent.commits.at(-1)
+
     deps.nats.publish(
       "gittan.pipeline.resolved",
       sc.encode(
@@ -202,6 +204,9 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
           forgejoFullName: repoMeta?.forgejoFullName ?? `${pushEvent.orgId}/${pushEvent.repoName}`,
           branch: pushEvent.branch,
           isGated: pushEvent.isGated,
+          commitSha: headCommit?.sha,
+          commitMessage: headCommit?.message,
+          pusher: pushEvent.pusher,
           resolved,
         }),
       ),

@@ -1,7 +1,7 @@
 import { Client } from "cassandra-driver"
 
 import type { TConfig } from "../config/index.js"
-import { CREATE_KEYSPACE, CREATE_TABLES } from "./schema.js"
+import { CREATE_KEYSPACE, CREATE_TABLES, MIGRATIONS } from "./schema.js"
 
 export const createDbClient = (config: TConfig): Client =>
   new Client({
@@ -20,6 +20,9 @@ export const initializeSchema = async (config: TConfig): Promise<void> => {
     await systemClient.execute(CREATE_KEYSPACE)
     for (const table of CREATE_TABLES) {
       await systemClient.execute(table)
+    }
+    for (const migration of MIGRATIONS) {
+      await systemClient.execute(migration).catch(() => {})
     }
   } finally {
     await systemClient.shutdown()

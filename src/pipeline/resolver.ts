@@ -2,10 +2,15 @@ import type { TOrgPolicy, TPipelineStep, TTeamTemplate } from "@bloomerab/gittan
 
 export type TResolvedStep = {
   readonly name: string
+  readonly description?: string
   readonly image?: string
   readonly use?: string
   readonly with?: Record<string, string>
   readonly run?: string
+  readonly publish?: {
+    readonly image: string
+    readonly dockerfile: string
+  }
   readonly needs?: ReadonlyArray<string>
   readonly only?: string
   readonly cache?: ReadonlyArray<string>
@@ -72,10 +77,12 @@ const toResolvedStep = (
   policyName?: string,
 ): TResolvedStep => ({
   name: step.name,
+  description: step.description,
   image: step.image,
   use: step.use,
   with: step.with,
   run: step.run,
+  publish: step.publish,
   needs: step.needs,
   only: step.only,
   cache: step.cache,

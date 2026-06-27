@@ -9,6 +9,9 @@ export type TPipelineRunRow = {
   readonly orgId: string
   readonly teamId: string
   readonly branch: string
+  readonly commitSha?: string
+  readonly commitMessage?: string
+  readonly pusher?: string
   readonly status: string
   readonly steps: ReadonlyArray<TPipelineStepRow>
   readonly startedAt: string
@@ -18,6 +21,7 @@ export type TPipelineRunRow = {
 
 export type TPipelineStepRow = {
   readonly stepName: string
+  readonly description?: string
   readonly status: string
   readonly durationMs: number
   readonly source?: string
@@ -41,6 +45,9 @@ const rowToRun = (row: Record<string, unknown>): TPipelineRunRow => ({
   orgId: row.org_id as string,
   teamId: row.team_id as string,
   branch: row.branch as string,
+  commitSha: (row.commit_sha as string) || undefined,
+  commitMessage: (row.commit_message as string) || undefined,
+  pusher: (row.pusher as string) || undefined,
   status: row.status as string,
   steps: JSON.parse((row.steps as string) || "[]") as ReadonlyArray<TPipelineStepRow>,
   startedAt: (row.started_at as Date).toISOString(),
@@ -62,8 +69,8 @@ export const createPipelineRepo = (client: Client) => ({
     const finishedAt = new Date(run.finishedAt)
 
     await client.execute(
-      `INSERT INTO ${KEYSPACE}.pipeline_runs (id, repo_id, push_event_id, org_id, team_id, branch, status, steps, started_at, finished_at, resolved_from)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO ${KEYSPACE}.pipeline_runs (id, repo_id, push_event_id, org_id, team_id, branch, commit_sha, commit_message, pusher, status, steps, started_at, finished_at, resolved_from)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         run.id,
         run.repoId,
@@ -71,6 +78,9 @@ export const createPipelineRepo = (client: Client) => ({
         run.orgId,
         run.teamId,
         run.branch,
+        run.commitSha ?? "",
+        run.commitMessage ?? "",
+        run.pusher ?? "",
         run.status,
         JSON.stringify(run.steps),
         startedAt,

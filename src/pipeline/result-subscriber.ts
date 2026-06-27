@@ -10,9 +10,13 @@ type TPipelineResultMessage = {
   readonly repoId: string
   readonly branch: string
   readonly isGated: boolean
+  readonly commitSha?: string
+  readonly commitMessage?: string
+  readonly pusher?: string
   readonly status: string
   readonly steps: ReadonlyArray<{
     readonly stepName: string
+    readonly description?: string
     readonly status: string
     readonly durationMs: number
     readonly source?: string
@@ -47,6 +51,9 @@ export const startResultSubscriber = (deps: TResultSubscriberDeps): void => {
           orgId: result.orgId,
           teamId: result.teamId,
           branch: result.branch,
+          commitSha: result.commitSha,
+          commitMessage: result.commitMessage,
+          pusher: result.pusher,
           status: result.status,
           steps: result.steps,
           startedAt: new Date(result.startedAt).toISOString(),
