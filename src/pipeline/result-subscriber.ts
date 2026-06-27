@@ -40,8 +40,9 @@ export const startResultSubscriber = (deps: TResultSubscriberDeps): void => {
         const result: TPipelineResultMessage = JSON.parse(sc.decode(msg.data))
         console.log(`Pipeline result received: repoId=${result.repoId} orgId=${result.orgId} teamId=${result.teamId} pushEventId=${result.pushEventId} status=${result.status} steps=${result.steps?.length} startedAt=${result.startedAt} finishedAt=${result.finishedAt}`)
 
+        const startedMs = new Date(result.startedAt).getTime()
         const run: TPipelineRunRow = {
-          id: result.pushEventId,
+          id: `${startedMs}-${result.pushEventId}`,
           repoId: result.repoId,
           pushEventId: result.pushEventId,
           orgId: result.orgId,
