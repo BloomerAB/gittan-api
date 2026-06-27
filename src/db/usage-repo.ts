@@ -84,6 +84,13 @@ export const createUsageRepo = (client: Client) => ({
     const ciMinutes = Math.ceil(input.durationMs / 60_000)
     const now = new Date().toISOString()
 
+    const current = await client.execute(
+      `SELECT ci_minutes_used FROM ${KEYSPACE}.org_usage_monthly WHERE org_id = ? AND month = ?`,
+      [input.orgId, month],
+      { prepare: true },
+    )
+    const currentMinutes = current.rows[0]?.ci_minutes_used ?? 0
+
     await client.batch(
       [
         {
@@ -92,8 +99,8 @@ export const createUsageRepo = (client: Client) => ({
           params: [input.orgId, month, eventId, "pipeline_run", input.pipelineRunId, input.teamId, input.repoId, input.durationMs, ciMinutes, now],
         },
         {
-          query: `UPDATE ${KEYSPACE}.org_usage_monthly SET ci_minutes_used = ci_minutes_used + ?, updated_at = ? WHERE org_id = ? AND month = ?`,
-          params: [ciMinutes, now, input.orgId, month],
+          query: `UPDATE ${KEYSPACE}.org_usage_monthly SET ci_minutes_used = ?, updated_at = ? WHERE org_id = ? AND month = ?`,
+          params: [currentMinutes + ciMinutes, now, input.orgId, month],
         },
       ],
       { prepare: true },
