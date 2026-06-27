@@ -32,7 +32,7 @@ export type TResultSubscriberDeps = {
 
 export const startResultSubscriber = (deps: TResultSubscriberDeps): void => {
   const sc = StringCodec()
-  const sub = deps.nats.subscribe("gittan.pipeline.result")
+  const sub = deps.nats.subscribe("gittan.pipeline.result", { queue: "result-saver" })
 
   ;(async () => {
     for await (const msg of sub) {

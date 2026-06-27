@@ -208,7 +208,7 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
     )
   }
 
-  const sub = deps.nats.subscribe("gittan.push.*")
+  const sub = deps.nats.subscribe("gittan.push.*", { queue: "pipeline-resolver" })
   ;(async () => {
     for await (const msg of sub) {
       try {
