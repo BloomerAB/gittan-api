@@ -1,5 +1,5 @@
 import type { Client } from "cassandra-driver"
-import { BLOCK_ADDITIONS, BLOCK_PRICE_EUR, PLAN_LIMITS, spendingCapToBlocks, type TPlanType } from "@bloomerab/gittan-types"
+import { BLOCK_ADDITIONS, BLOCK_PRICE_EUR, PLAN_LIMITS, spendingCapToBlocks, type TPlanType } from "@gittan/types"
 
 import { KEYSPACE } from "./schema.js"
 

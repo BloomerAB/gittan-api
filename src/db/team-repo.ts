@@ -1,5 +1,5 @@
 import type { Client } from "cassandra-driver"
-import type { TTeam, TTeamMember } from "@bloomerab/gittan-types"
+import type { TTeam, TTeamMember } from "@gittan/types"
 
 import { KEYSPACE } from "./schema.js"
 

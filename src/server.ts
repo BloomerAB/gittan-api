@@ -1,5 +1,6 @@
 import express from "express"
 import type { Application, Request, Response } from "express"
+import type { NatsConnection } from "nats"
 import type { OpenAPIV3 } from "openapi-types"
 
 import { setupApp } from "@bloomerab/npm-api-essentials"
@@ -8,6 +9,7 @@ import apiDoc from "./api-definition.js"
 import { createBearerTokenMiddleware } from "./auth/bearer-token-middleware.js"
 import type { TConfig } from "./config/index.js"
 import { generateInstallScript, resolveLatestCliVersion, listCliVersions } from "./cli/distribution.js"
+import { createPipelineSseHandler } from "./pipeline/sse.js"
 
 export type THealthDependency = {
   readonly name: string
@@ -49,6 +51,7 @@ const stripOperationSecurity = (
 export const createServer = async (
   config: TConfig,
   healthDependencies: ReadonlyArray<THealthDependency>,
+  nats?: NatsConnection,
 ): Promise<Application> => {
   process.env.OAUTH2_INTROSPECTION_URL = `${config.oauth2Issuer}/oauth/introspect`
   process.env.OAUTH2_CLIENT_ID = config.oauth2ClientId
@@ -171,6 +174,11 @@ export const createServer = async (
   })
 
   app.use(createBearerTokenMiddleware(config))
+
+  if (nats) {
+    app.get("/orgs/:orgId/repos/:repoId/pipelines/live", createPipelineSseHandler(nats))
+  }
+
   app.use(innerApp)
 
   app.get("/readyz", async (_req: Request, res: Response) => {

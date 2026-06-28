@@ -1,6 +1,6 @@
 import type { NatsConnection } from "nats"
 import { StringCodec } from "nats"
-import { BLOCK_ADDITIONS, PLAN_LIMITS, spendingCapToBlocks } from "@bloomerab/gittan-types"
+import { BLOCK_ADDITIONS, PLAN_LIMITS, spendingCapToBlocks } from "@gittan/types"
 
 import type { TAlertRepo } from "../db/alert-repo.js"
 import type { TPolicyRepo } from "../db/policy-repo.js"
@@ -47,10 +47,14 @@ export type TSubscriberDeps = {
   readonly policyRepo: TPolicyRepo
   readonly getOrgName: (orgId: string) => Promise<string>
   readonly getReceiptEmail: (orgId: string) => Promise<string | undefined>
-  readonly getPolicies: (orgId: string) => Promise<ReadonlyArray<import("@bloomerab/gittan-types").TOrgPolicy>>
-  readonly getTemplate: (teamId: string) => Promise<import("@bloomerab/gittan-types").TTeamTemplate | undefined>
+  readonly getPolicies: (orgId: string) => Promise<ReadonlyArray<import("@gittan/types").TOrgPolicy>>
+  readonly getTemplate: (teamId: string) => Promise<import("@gittan/types").TTeamTemplate | undefined>
   readonly getRepoFiles: (forgejoFullName: string) => Promise<ReadonlyArray<string>>
-  readonly getRepoConfig: (forgejoFullName: string) => Promise<{ steps: ReadonlyArray<import("@bloomerab/gittan-types").TPipelineStep> } | undefined>
+  readonly getRepoConfig: (forgejoFullName: string) => Promise<{
+    steps: ReadonlyArray<import("@gittan/types").TPipelineStep>
+    depends?: ReadonlyArray<{ repo: string; cascade: boolean; contractTest: boolean }>
+  } | undefined>
+  readonly syncDependencies?: (repoId: string, repoName: string, orgId: string, depends: ReadonlyArray<{ repo: string; cascade: boolean; contractTest: boolean }>) => Promise<void>
   readonly onPipelineResolved: (event: TPipelineEvent) => Promise<void>
 }
 
@@ -177,6 +181,10 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
         ? deps.getRepoFiles(repoMeta.forgejoFullName)
         : Promise.resolve([]),
     ])
+
+    if (deps.syncDependencies && repoConfig?.depends && repoConfig.depends.length > 0) {
+      await deps.syncDependencies(pushEvent.repoId, pushEvent.repoName, pushEvent.orgId, repoConfig.depends)
+    }
 
     const resolved = resolvePipeline({
       repoConfig,

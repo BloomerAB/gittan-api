@@ -1,4 +1,4 @@
-import { GittanYamlSchema, type TGittanYaml } from "@bloomerab/gittan-types"
+import { GittanYamlSchema, type TGittanYaml } from "@gittan/types"
 import * as yaml from "yaml"
 
 import type { TConfig } from "../config/index.js"

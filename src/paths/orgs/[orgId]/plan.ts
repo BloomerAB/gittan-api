@@ -1,9 +1,9 @@
 import type { Request, Response } from "express"
 import { z } from "zod"
 
-import { BLOCK_ADDITIONS, PLAN_LIMITS, PlanTypeSchema, spendingCapToBlocks } from "@bloomerab/gittan-types"
+import { BLOCK_ADDITIONS, PLAN_LIMITS, PlanTypeSchema, spendingCapToBlocks } from "@gittan/types"
 
-import type { TPlanType } from "@bloomerab/gittan-types"
+import type { TPlanType } from "@gittan/types"
 
 import { assertOrgAccess, param } from "../../../auth/helpers.js"
 import { deps } from "../../../deps.js"

@@ -1,4 +1,4 @@
-import { BLOCK_ADDITIONS, PLAN_LIMITS, spendingCapToBlocks, type TPlanType } from "@bloomerab/gittan-types"
+import { BLOCK_ADDITIONS, PLAN_LIMITS, spendingCapToBlocks, type TPlanType } from "@gittan/types"
 
 import type { TAlertRepo } from "../db/alert-repo.js"
 import type { TOrgUsageRow } from "../db/usage-repo.js"
