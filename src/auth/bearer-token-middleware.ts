@@ -1,15 +1,42 @@
+import type { Client } from "cassandra-driver"
 import type { NextFunction, Request, Response } from "express"
 
 import type { TConfig } from "../config/index.js"
+import { KEYSPACE } from "../db/schema.js"
+import { deps } from "../deps.js"
 
+// The shared auth-server is a pure IdP: introspection proves identity only
+// (active, userId/sub, email). Authorization (role, org/company membership) is
+// owned by gittan and resolved from gittan's own users table — never carried in
+// the token. (Plan: decouple token introspection from any single product.)
 type TIntrospectionResponse = {
   readonly active: boolean
   readonly sub?: string
-  readonly email?: string
   readonly scope?: string
   readonly userId?: string
-  readonly companyId?: string
-  readonly role?: string
+}
+
+type TUserAttributes = {
+  readonly email: string
+  readonly companyId: string
+  readonly role: string
+}
+
+const resolveUserAttributes = async (
+  db: Client,
+  userId: string,
+): Promise<TUserAttributes> => {
+  const result = await db.execute(
+    `SELECT email, role, org_id FROM ${KEYSPACE}.users WHERE id = ?`,
+    [userId],
+    { prepare: true },
+  )
+  const row = result.first()
+  return {
+    email: (row?.email as string) ?? "",
+    companyId: (row?.org_id as string) ?? "",
+    role: (row?.role as string) ?? "member",
+  }
 }
 
 const UNPROTECTED_PREFIXES = [
@@ -84,11 +111,15 @@ export const createBearerTokenMiddleware = (config: TConfig) => {
       }
 
       const userId = result.userId ?? result.sub ?? ""
+      const { email, companyId, role } = await resolveUserAttributes(
+        deps().db,
+        userId,
+      )
       ;(req as unknown as Record<string, unknown>).user = {
         id: userId,
-        email: result.email ?? "",
-        companyId: result.companyId ?? "",
-        role: result.role ?? "member",
+        email,
+        companyId,
+        role,
       }
 
       next()
