@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@gittan/types': link:../types
-
 importers:
 
   .:
@@ -15,8 +12,8 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0(ajv@8.20.0)
       '@gittan/types':
-        specifier: link:../types
-        version: link:../types
+        specifier: ^0.10.0
+        version: 0.10.0
       cassandra-driver:
         specifier: ^4.7.2
         version: 4.9.0
@@ -376,6 +373,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@gittan/types@0.10.0':
+    resolution: {integrity: sha512-7aClY1sLzAI2P5N76PvhV4dL/mxZDS6XfPME5XJVHuA1iB1GhsWsAAuWvr6ZpWbAujTfp+EKw3PW52zf+KSRPg==, tarball: https://npm.gittan.eu/gittan/%40gittan%2Ftypes/-/0.10.0/types-0.10.0.tgz}
 
   '@isaacs/cliui@9.0.0':
     resolution: {integrity: sha512-AokJm4tuBHillT+FpMtxQ60n8ObyXBatq7jD2/JA9dxbDDokKQm8KMht5ibGzLVU9IJDIKK4TPKgMHEYMn3lMg==}
@@ -1736,6 +1736,10 @@ snapshots:
 
   '@esbuild/win32-x64@0.28.1':
     optional: true
+
+  '@gittan/types@0.10.0':
+    dependencies:
+      zod: 3.25.76
 
   '@isaacs/cliui@9.0.0': {}
 
