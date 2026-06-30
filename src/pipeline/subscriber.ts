@@ -198,6 +198,7 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
 
     await deps.onPipelineResolved({ pushEvent, resolved })
 
+    const orgName = await deps.getOrgName(pushEvent.orgId)
     const headCommit = pushEvent.commits.at(-1)
 
     deps.nats.publish(
@@ -206,6 +207,7 @@ export const startPipelineSubscriber = (deps: TSubscriberDeps): void => {
         JSON.stringify({
           pushEventId: pushEvent.id,
           orgId: pushEvent.orgId,
+          orgName,
           teamId: pushEvent.teamId,
           repoId: pushEvent.repoId,
           repoName: pushEvent.repoName,

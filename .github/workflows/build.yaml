@@ -19,10 +19,11 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          registry-url: https://npm.pkg.github.com
+      - run: |
+          echo "@bloomerab:registry=https://npm.pkg.github.com" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
+          echo "//npm.gittan.eu/:_authToken=${{ secrets.FORGEJO_TOKEN }}" >> .npmrc
       - run: pnpm install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: pnpm typecheck
       - run: pnpm test
 
